@@ -1,24 +1,25 @@
-import logo from './logo.svg';
 import './App.css';
+import Layout from './js/layout';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+// Can change theme colors here:
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#26a69a',
+    },
+    secondary: {
+      main: '#009688',
+    },
+  },
+});
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    // ThemeProvider applies the colors to the whole app
+    <ThemeProvider theme={theme}>
+      <Layout />
+    </ThemeProvider>
   );
 }
 
