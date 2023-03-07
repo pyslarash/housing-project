@@ -1,122 +1,42 @@
-import TextField from '@mui/material/TextField';
-import { Button, Paper, Slider, Typography } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2/Grid2';
-import React, { useState } from 'react';
+import React from 'react';
+import { Paper } from '@mui/material';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
 
-function valueTextPopDensity(value) {
-    return `${value}°C`;
-  }
-
-function valueTextAvgIncome(value) {
-    return `${value}°C`;
-};
 
 const SearchBox = () => {
-
-    const [valuePopDens, setValuePopDens] = useState([20, 37]);
-    const [valueAvgInc, setValueAvgInc] = useState([20, 37]);
-
-    const handleChangePopDensity = (event, newValue) => {
-        setValuePopDens(newValue);
-    };
-
-    const handleChangeAvgIncome = (event, newValue) => {
-        setValueAvgInc(newValue);
-    };
-
-    return (        
-        <Paper sx={{ p: 5, width: '100%' }} elevation={5} >
-            <Grid container>
-                {/* First Row */}
-                <Grid xs={3}>
-                    <TextField sx={{ margin: '10px' }}
-                        id="min-population"
-                        label="Min Population"
-                        type="number"
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
-                </Grid>
-                <Grid xs={3}>
-                    <TextField sx={{ margin: '10px' }}
-                        id="max-population"
-                        label="Max Population"
-                        type="number"
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
-                </Grid>
-                <Grid xs={3} justify="center" alignItems="center">
-                    <Typography id="input-slider" gutterBottom>
-                        Population Density
-                    </Typography>
-                    <Slider
-                        style={{ width: "85%" }}
-                        getAriaLabel={() => 'Population Density'}
-                        value={valuePopDens}
-                        onChange={handleChangePopDensity}
-                        valueLabelDisplay="auto"
-                        getAriaValueText={valueTextPopDensity}
-                    />
-                </Grid>
-                <Grid xs={3} justify="center" alignItems="center">
-                    <Typography id="input-slider" gutterBottom>
-                        Average Income
-                    </Typography>
-                    <Slider
-                        style={{ width: "85%" }}
-                        getAriaLabel={() => 'Population Density'}
-                        value={valueAvgInc}
-                        onChange={handleChangeAvgIncome}
-                        valueLabelDisplay="auto"
-                        getAriaValueText={valueTextAvgIncome}
-                    />
-                </Grid>
-                {/* Second Row */}
-                <Grid xs={3}>
-                    
-                </Grid>
-                <Grid xs={3}>
-                    
-                </Grid>
-                <Grid xs={3}>
-                    
-                </Grid>
-                <Grid xs={3}>
-                    
-                </Grid>
-                {/* Second-to-last Row */}        
-                <Grid xs={3}>
-                    <TextField sx={{ margin: '10px' }}
-                        id="result-limit"
-                        label="Result Limit"
-                        type="number"
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
-                </Grid>
-                <Grid xs={3}>
-
-                </Grid>
-                <Grid xs={3}>
-
-                </Grid>
-                <Grid xs={3}>
-
-                </Grid>
-                {/* Last Row */}
-                <Grid xs={12} container justifyContent="flex-end">
-                    <Button variant="contained" size="large">
-                        Submit
-                    </Button>
-                </Grid>
-            </Grid>
+    
+    return (
+      <>
+        <Typography variant="h2" component="h1">
+            Find Your City!
+        </Typography>
+        <Paper sx={{ width: '100%', p: 5 }} elevation={1}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ width: '30%' }}>
+              {/* This column is responsible for the City Level*/}
+              <Typography variant="h5" component="h2">
+                City
+              </Typography>
+              
+            </Box>          
+            <Box sx={{ width: '30%' }}>
+              {/* This column is responsible for the Metro Level*/}
+              <Typography variant="h5" component="h2">
+                Metro
+              </Typography>
+              
+            </Box>
+            <Box sx={{ width: '30%' }}>
+              {/* This column is responsible for the State Level*/}
+              <Typography variant="h5" component="h2">
+                State
+              </Typography>
+              
+            </Box>
+          </Box>
         </Paper>
-
-    )
+      </>
+    );
 }
-
 export default SearchBox;
