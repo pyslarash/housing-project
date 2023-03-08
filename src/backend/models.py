@@ -24,6 +24,7 @@ class User(Base):
     first_name = Column(String(255))
     last_name = Column(String(255))
     info = Column(Text)
+    type = Column(String(255))
 
     def serialize(self):
         return {
@@ -33,7 +34,8 @@ class User(Base):
             'email': self.email,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'info': self.info
+            'info': self.info,
+            'type': self.type
         }
 
 class CombinedCityData(Base):

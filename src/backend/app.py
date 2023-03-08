@@ -94,7 +94,7 @@ def create_user():
 # THIS ENDPOINT DELETES A USER
 @app.route('/users/<int:user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    user = User.query.get(user_id)
+    user = session.query(User).filter_by(id=user_id).first()
     if user is None:
         response = make_response(jsonify({'message': 'User not found'}), 404)
         response.headers['Content-Type'] = 'application/json'
@@ -102,7 +102,52 @@ def delete_user(user_id):
     session.delete(user)
     session.commit()
     return jsonify({'message': 'User deleted successfully'}), 200
-    
+
+# THIS ENDPOINT UPDATES A USER
+@app.route('/users/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    if session:
+        # Get the user from the database
+        user = session.query(User).filter_by(id=user_id).first()
+
+        # Check if the user exists
+        if user is None:
+            response = make_response(jsonify({'message': 'User not found'}), 404)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+
+        # Get the updated user data from the request body
+        request_body_user = request.get_json()
+
+        # Check if the updated username or email already exist
+        existing_user = session.query(User).filter(User.username == request_body_user.get('username'), User.id != user_id).first()
+        existing_email = session.query(User).filter(User.email == request_body_user.get('email'), User.id != user_id).first()
+
+        # If username or email already exist for another user, return an error
+        if existing_user or existing_email:
+            response = make_response(jsonify({'message': 'Username or email already exists for another user'}), 400)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+
+         # Update the user's data
+        user.profile_pic = request_body_user.get('profile_pic', user.profile_pic)
+        user.username = request_body_user.get('username', user.username)
+        user.email = request_body_user.get('email', user.email)
+        user.password = request_body_user.get('password', user.password)
+        user.first_name = request_body_user.get('first_name', user.first_name)
+        user.last_name = request_body_user.get('last_name', user.last_name)
+        user.info = request_body_user.get('info', user.info)
+        user.type = request_body_user.get('type', user.type)
+
+        # Commit the changes to the database
+        session.commit()
+
+        # Return the updated user data
+        serialized_user = user.serialize()
+        return jsonify(serialized_user), 200
+    else:
+        return "Unable to connect to database", 500
+
 #THIS IS THE FILTER FOR THE DATABASE
 @app.route('/filtered_city_data', methods=['GET'])
 def get_filtered_city_data():
