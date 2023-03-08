@@ -48,6 +48,60 @@ def get_users():
         return jsonify(serialized_users), 200
     else:
         return "Unable to connect to database", 500
+
+# THIS ENDPOINT SHOWS INFO OF A SINGLE USER BY ID OF A USER ID
+@app.route('/users/<int:user_id>', methods=['GET'])  
+def get_single_user(user_id):
+    session = Session()
+    user = session.query(User).filter_by(id=user_id).first()
+    session.close()
+
+    # Check if the user was found
+    if user is None:
+        response = make_response(jsonify({'message': 'User not found'}), 404)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Serialize the user data and return it as JSON
+    serialized_user = user.serialize()
+    return jsonify(serialized_user), 200
+
+# THIS ENDPOINT CREATES A USER
+@app.route('/create_user', methods=['POST'])
+def create_user():
+    if session:
+        request_body_user = request.get_json()
+        
+        # Check if username or email already exist
+        existing_user = session.query(User).filter_by(username=request_body_user['username']).first()
+        existing_email = session.query(User).filter_by(email=request_body_user['email']).first()
+        
+        # If username or email already exist, return an error
+        if existing_user or existing_email:
+            response = make_response(jsonify({'message': 'Username or email already exists'}), 400)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        
+        # If username and email do not exist, create new user
+        user_add = User(username=request_body_user["username"], email=request_body_user["email"], password=request_body_user["password"], type=request_body_user["type"])
+        session.add(user_add)
+        session.commit()
+        print(request_body_user)
+        return jsonify(request_body_user), 200
+    else:
+        return "Unable to connect to database", 500
+
+# THIS ENDPOINT DELETES A USER
+@app.route('/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if user is None:
+        response = make_response(jsonify({'message': 'User not found'}), 404)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    session.delete(user)
+    session.commit()
+    return jsonify({'message': 'User deleted successfully'}), 200
     
 #THIS IS THE FILTER FOR THE DATABASE
 @app.route('/filtered_city_data', methods=['GET'])
