@@ -21,7 +21,8 @@ const settings = ['Profile', 'Saves', 'Logout'];
 
 function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [anchorElUser, setAnchorElUser] = useState(null);  
+  const [anchorElUser, setAnchorElUser] = useState(null);
+  const [loggedIn, setLoggedIn] = useState(false); // Add state for whether the user is logged in or not
 
   const handleOpenDrawer = () => {
     setDrawerOpen(true);
@@ -39,33 +40,46 @@ function Navbar() {
     setAnchorElUser(null);
   };
 
+  const handleLogin = () => {
+    // Handle the login logic here, such as showing a login form
+    console.log('Login clicked');
+  };
+
+  const handleLogout = () => {
+    // Handle the logout logic here, such as clearing the user session
+    setLoggedIn(false);
+  };
+
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-        <img src={logo} alt="Logo" width="30" height="30" /> {/* This is the logo in the AppBar */}
-        <Typography
+          <img src={logo} alt="Logo" width="30" height="30" />
+          <Typography
             variant="h6"
             noWrap
-            component={Link} // Use the Link component
-            to="/" // Set the link destination to the root
+            component={Link}
+            to="/"
             sx={{
-                mr: 2,
-                display: { xs: 'none', md: 'flex' },
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                marginLeft: '20px',
-                color: 'inherit',
-                textDecoration: 'none',
+              mr: 2,
+              display: { xs: 'none', md: 'flex' },
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              letterSpacing: '.3rem',
+              marginLeft: '20px',
+              color: 'inherit',
+              textDecoration: 'none',
             }}
-            >
-            Peoplemvr {/* This is the large logo */}
-            </Typography>
+          >
+            Peoplemvr
+          </Typography>
 
-          <Box sx={{ 
-            flexGrow: 1, 
-            display: { xs: 'flex', md: 'none' }, }}>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: { xs: 'flex', md: 'none' },
+            }}
+          >
             <IconButton
               size="large"
               aria-label="account of current user"
@@ -76,7 +90,6 @@ function Navbar() {
             >
               <MenuIcon />
             </IconButton>
-            {/* This is the slide-out left menu */}
             <Drawer
               anchor="left"
               open={drawerOpen}
@@ -102,40 +115,55 @@ function Navbar() {
           <Typography
             variant="h5"
             noWrap
-            component={Link} // Use the Link component
-            to="/" // Set the link destination to the root
+            component={Link}
+            to="/"
             sx={{
-                mr: 2,
-                display: { xs: 'flex', md: 'none' },
-                flexGrow: 1,
-                fontFamily: 'monospace',
-                fontWeight: 700,
-                letterSpacing: '.3rem',
-                color: 'inherit',
-                textDecoration: 'none',
+              mr: 2,
+              display: { xs: 'flex', md: 'none' },
+              flexGrow: 1,
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              letterSpacing: '.3rem',
+              color: 'inherit',
+              textDecoration: 'none',
             }}
-            >
-            Peoplemvr {/* This is the small logo */}
-            </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {/* This is our large screen menu */}
+          >
+            Peoplemvr
+          </Typography>
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: { xs: 'none', md: 'flex' },
+            }}
+          >
             {pages.map((page) => (
-                <MenuItem 
-                    component={Link} // Use the Link component
-                    to={page === "Search" ? "/" : `/${page.toLowerCase()}`} // Set the link destination based on the page name
-                    key={page}
-                    onClick={handleCloseDrawer}>
-                    <Typography textAlign="center">{page}</Typography>
-                </MenuItem>
+              <MenuItem
+                component={Link}
+                to={page === 'Search' ? '/' : `/${page.toLowerCase()}`}
+                key={page}
+                onClick={handleCloseDrawer}
+              >
+                <Typography textAlign="center">{page}</Typography>
+              </MenuItem>
             ))}
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
-              </IconButton>
-            </Tooltip>
+            {/* Conditionally render the user avatar or the Login button based on whether the user is logged in */}
+            {loggedIn ? (
+              <Tooltip title="Open settings">
+                <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                  <Avatar alt="User Avatar" src="/static/images/avatar/2.jpg" />
+                </IconButton>
+              </Tooltip>
+            ) : (
+              <MenuItem
+                component={Link}
+                to={'/login'}
+              >
+                Login
+              </MenuItem>
+            )}
             <Menu
               sx={{ mt: '45px' }}
               id="menu-appbar"
@@ -152,9 +180,8 @@ function Navbar() {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-            {/* This is wheer we are mapping settings */}
               {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+                <MenuItem key={setting} onClick={handleLogout}>
                   <Typography textAlign="center">{setting}</Typography>
                 </MenuItem>
               ))}
@@ -165,4 +192,5 @@ function Navbar() {
     </AppBar>
   );
 }
+
 export default Navbar;
