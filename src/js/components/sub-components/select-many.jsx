@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
+import axios from 'axios';
 
 const StyledInput = styled(Input)(({ theme }) => ({
   width: '50px',
@@ -30,11 +31,12 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
 export default function SelectMany({
   name,
   columnName,
-  questionMarkText,
-  listArray,
-}) {
+  questionMarkText
+  }) {
   const [value, setValue] = useState([]);
-  const [isActive, setIsActive] = useState(true);
+  const [isActive, setIsActive] = useState(false);
+  const [listArray, setListArray] = useState(["It doesn't matter"]);
+  const URL = "http://localhost:5000"; // Defining the database URL
 
   useEffect(() => {
     if (listArray) {
@@ -44,13 +46,21 @@ export default function SelectMany({
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
+    if (!isActive) { // make API request only if the toggle is being turned on
+        axios.get(`${URL}/column_values?column_name=${columnName}`)
+          .then((response) => {
+            const sortedValues = response.data.values.sort();
+            setListArray(["It doesn't matter", ...sortedValues])
+          })
+          .catch((error) => console.log(error));
+    }
   };
 
   const handleSelectChange = (event) => {
     setValue(event.target.value);
   };
 
-  const [listName, setListName] = React.useState([]);
+  const [listName, setListName] = useState([]);
   const handleChangeMultiple = (event) => {
     const { options } = event.target;
     const value = [];
@@ -63,7 +73,7 @@ export default function SelectMany({
   };
 
   return (
-    <Box sx={{ width: 250 }}>
+    <Box sx={{ width: 300 }}>
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item>
           <Typography id="select-many-label" gutterBottom>
@@ -90,7 +100,6 @@ export default function SelectMany({
                 onChange={handleChangeMultiple}
                 inputProps={{ id: 'select-many-native' }}
               >
-                <option value="" />
                 {listArray.map((item) => (
                   <option key={item} value={item}>
                     {item}

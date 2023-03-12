@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { Input, Switch, Tooltip, Select, MenuItem } from '@mui/material';
 import { useState, useEffect } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
+import axios from 'axios';
 
 const StyledInput = styled(Input)(({ theme }) => ({
   width: '50px',
@@ -19,9 +20,13 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-export default function Dropdown({ name, columnName, questionMarkText, listArray }) {
+export default function Dropdown({ name, columnName, questionMarkText, trueValue, falseValue }) {
   const [value, setValue] = useState(null);
-  const [isActive, setIsActive] = useState(true);
+  const [isActive, setIsActive] = useState(false);
+  const [listArray, setListArray] = useState(["It doesn't matter"]);
+  const URL = "http://localhost:5000"; // Defining the database URL
+
+
 
   useEffect(() => {
     if (listArray) {
@@ -31,6 +36,14 @@ export default function Dropdown({ name, columnName, questionMarkText, listArray
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
+    if (!isActive) { // make API request only if the toggle is being turned on
+        axios.get(`${URL}/column_values?column_name=${columnName}`)
+        .then((response) => {
+          const formattedListArray = ["It doesn't matter", ...response.data.values];
+          setListArray(formattedListArray.map(item => item === "TRUE" ? trueValue : item === "FALSE" ? falseValue : item));
+        })
+          .catch((error) => console.log(error));
+    }
   };
 
   const handleSelectChange = (event) => {
@@ -38,7 +51,7 @@ export default function Dropdown({ name, columnName, questionMarkText, listArray
   };
 
   return (
-    <Box sx={{ width: 250 }}>
+    <Box sx={{ width: 300 }}>
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item>
           <Typography id="dropdown-label" gutterBottom>
@@ -54,13 +67,14 @@ export default function Dropdown({ name, columnName, questionMarkText, listArray
       </Grid>
       {isActive && listArray && (
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid item sx={{ width: '100%' }}>
             <Select
               value={value}
               onChange={handleSelectChange}
               labelId="dropdown-label"
               id="dropdown"
               disabled={!isActive}
+              sx={{ width: '100%' }}
             >
               {listArray.map((item) => (
                 <MenuItem value={item} key={item}>

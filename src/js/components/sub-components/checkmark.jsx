@@ -22,7 +22,7 @@ const Checkmark = ({ name, columnName, questionMarkText }) => {
   };
 
   return (
-    <Box sx={{ width: 250 }}>
+    <Box sx={{ width: 300 }}>
       <Grid container alignItems="center">
         <Grid item>
           <Checkbox
@@ -35,7 +35,7 @@ const Checkmark = ({ name, columnName, questionMarkText }) => {
           <Typography id="input-slider" gutterBottom>
             {name}
             <Tooltip title={questionMarkText}>
-              <QuestionMark title={columnName} />
+              <QuestionMark />
             </Tooltip>
           </Typography>
         </Grid>

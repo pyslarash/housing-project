@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, make_response
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, func, select
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
@@ -8,8 +8,10 @@ from jwt_config import configure_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Favorites, CombinedCityData, RevokedToken
 from datetime import timedelta
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app) # This enables CORS for all routes
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://pyslarash:!FancyPass123$@localhost/housing_project'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -714,6 +716,50 @@ def get_filtered_city_data():
 
     else:
         return "Unable to connect to database", 500
+    
+# HERE WE ARE GETTING THE COLUMN STATS
+@app.route('/column_review', methods=['GET'])
+def get_column_stats():
+    if session:
+        # Get the query parameters
+        column_name = request.args.get('column_name')
+        min_val = None
+        max_val = None
+        null_values_exist = None
+
+        # Check if the column name is valid
+        if hasattr(CombinedCityData, column_name):
+            # Get the minimum value
+            min_val = session.query(func.min(getattr(CombinedCityData, column_name))).scalar()
+
+            # Get the maximum value
+            max_val = session.query(func.max(getattr(CombinedCityData, column_name))).scalar()
+
+            # Check if there are null values
+            null_values_exist = session.query(CombinedCityData).filter(getattr(CombinedCityData, column_name) == None).count() > 0
+
+        # Return the results
+        result = {'column_name': column_name, 'min_value': min_val, 'max_value': max_val, 'null_values_exist': null_values_exist}
+        return jsonify(result), 200
+
+    else:
+        return "Unable to connect to database", 500
+    
+# Getting all of the values from a certain column
+@app.route('/column_values', methods=['GET'])
+def get_column_values():
+    # Get the column name from the query parameter
+    column_name = request.args.get('column_name')
+
+    # Select distinct values from the column using SQLalchemy
+    stmt = select(getattr(CombinedCityData, column_name)).distinct()
+    results = db.session.execute(stmt).fetchall()
+
+    # Convert results to a list of values
+    values = [row[0] for row in results]
+
+    # Return the values as a JSON response
+    return jsonify(values=values)
 
     
 if __name__ == '__main__':

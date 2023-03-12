@@ -6,6 +6,8 @@ import Typography from '@mui/material/Typography';
 import { Input, Switch, Checkbox, Tooltip } from '@mui/material';
 import { useState, useEffect } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
+import axios from 'axios';
+
 
 const StyledInput = styled(Input)(({ theme }) => ({
   width: '50px',
@@ -19,18 +21,22 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-export default function MinMax({ name, minValue, maxValue, columnName, isNACheckedProp, questionMarkText }) {
-  const [value, setValue] = useState([minValue || 0, maxValue || 100]);
-  const [isActive, setIsActive] = useState(true);
-  const [isNAChecked, setIsNAChecked] = useState(Boolean(isNACheckedProp));
+export default function MinMax({ name, columnName, questionMarkText }) {
+  const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
+  const [maxValue, setMaxValue] = useState(null); // Initialize to null instead of 100
+  const [value, setValue] = useState([0, 100]); // Initialize with default values
+  const [isActive, setIsActive] = useState(false);
+  const [isNAChecked, setIsNAChecked] = useState(false);
   const [isNADisabled, setIsNADisabled] = useState(false);
+  const URL = "http://localhost:5000"; // Defining the database URL
+
+  
 
   useEffect(() => {
-    if (!isNACheckedProp) {
-      setIsNAChecked(false);
-      setIsNADisabled(true);
+    if (minValue !== null && maxValue !== null) { // Render only when the API call has completed
+      setValue([minValue, maxValue]);
     }
-  }, [isNACheckedProp]);
+  }, [minValue, maxValue]);
 
   const handleInputChange = (event, index) => {
     const newValue = event.target.value === '' ? '' : Number(event.target.value);
@@ -41,6 +47,20 @@ export default function MinMax({ name, minValue, maxValue, columnName, isNACheck
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
+    if (!isActive) { // make API request only if the toggle is being turned on
+    axios
+      .get(`${URL}/column_review?column_name=${columnName}`)
+      .then(response => {
+        setMinValue(response.data.min_value);
+        setMaxValue(response.data.max_value);
+        setIsNAChecked(response.data.null_values_exist);
+        setIsNADisabled(!response.data.null_values_exist);
+        console.log(response.data)
+      })
+      .catch(error => {
+        console.error(error);
+      });
+    }
   };
 
   const handleNACheck = () => {
@@ -52,12 +72,8 @@ export default function MinMax({ name, minValue, maxValue, columnName, isNACheck
     }
   };
 
-  // const isNA = () => {
-  //   return value[0] === minValue && value[1] === maxValue;
-  // };
-
   return (
-    <Box sx={{ width: 250 }}>
+    <Box sx={{ width: 300 }}>
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item>
           <Typography id="input-slider" gutterBottom>
@@ -94,7 +110,7 @@ export default function MinMax({ name, minValue, maxValue, columnName, isNACheck
                 type: 'number',
                 'aria-labelledby': 'input-slider',
               }}
-              sx={{ width: 60 }}
+              sx={{ width: 80 }}
             />
           </Grid>
           <Grid item>
@@ -112,7 +128,7 @@ export default function MinMax({ name, minValue, maxValue, columnName, isNACheck
                 type: 'number',
                 'aria-labelledby': 'input-slider',
               }}
-              sx={{ width: 60 }}
+              sx={{ width: 80 }}
             />
           </Grid>
         </Grid>
