@@ -2,6 +2,9 @@ from flask import Flask
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Float, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import query
+import secrets
+from flask_sqlalchemy import SQLAlchemy
 import mysql.connector # Connecting to MySQL DB
 
 # create a connection to the MySQL server in XAMPP
@@ -10,21 +13,26 @@ cnx = mysql.connector.connect(user='pyslarash', password='!FancyPass123$',
                               database='housing_project')
 
 app = Flask(__name__)
+db = SQLAlchemy()
 
-Base = declarative_base()
-
-class User(Base):
+class User(db.Model):
     __tablename__ = 'user'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    profile_pic = Column(String(255))
-    username = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=False)
-    password = Column(String(255), nullable=False)
-    first_name = Column(String(255))
-    last_name = Column(String(255))
-    info = Column(Text)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    profile_pic = db.Column(db.String(255))
+    username = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255))
+    first_name = db.Column(db.String(255))
+    last_name = db.Column(db.String(255))
+    info = db.Column(db.Text)
+    type = db.Column(db.String(50))
+    logged_in = db.Column(db.Boolean, default=False)    
+    favorites_count = db.relationship("Favorites", lazy='subquery', backref="user_parent", cascade="all,delete-orphan", overlaps="favorites_count,user_parent")
 
+    # Add the query_class attribute to the User class
+    query_class = query.Query
+    
     def serialize(self):
         return {
             'id': self.id,
@@ -33,40 +41,42 @@ class User(Base):
             'email': self.email,
             'first_name': self.first_name,
             'last_name': self.last_name,
-            'info': self.info
+            'info': self.info,
+            'type': self.type,
+            'favorites_count': len(self.favorites_count)
         }
 
-class CombinedCityData(Base):
+class CombinedCityData(db.Model):
     __tablename__ = 'combined_city_data'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    city = Column(String(255), nullable=False)
-    state = Column(String(255), nullable=False)
-    city_median_income = Column(Integer)
-    city_crime_violent = Column(Integer)
-    city_crime_property = Column(Integer)
-    city_num_of_brews = Column(Integer)
-    city_one_br_price = Column(Integer)
-    city_two_br_price = Column(Integer)
-    city_is_startup = Column(String(255))
-    city_is_foodie = Column(String(255))
-    cbsa = Column(Integer)
-    metro = Column(String(255))
-    metro_state = Column(String(255))
-    metro_population = Column(Integer)
-    metro_aqi = Column(Integer)
-    metro_one_br_price = Column(Integer)
-    metro_two_br_price = Column(Integer)
-    metro_unemployment = Column(Float)
-    metro_avg_nwi = Column(Float)
-    state_min_wage = Column(Float)
-    mj_legal_status = Column(String(255))
-    mj_medicinal = Column(String(255))
-    mj_decriminalized = Column(String(255))
-    state_one_br_price = Column(Integer)
-    state_two_br_price = Column(Integer)
-    city_population = Column(Integer)
-    city_density = Column(Float)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    city = db.Column(db.String(255), nullable=False)
+    state = db.Column(db.String(255), nullable=False)
+    city_median_income = db.db.Column(Integer)
+    city_crime_violent = db.Column(db.Integer)
+    city_crime_property = db.Column(db.Integer)
+    city_num_of_brews = db.Column(db.Integer)
+    city_one_br_price = db.Column(db.Integer)
+    city_two_br_price = db.Column(db.Integer)
+    city_is_startup = db.Column(db.String(255))
+    city_is_foodie = db.Column(db.String(255))
+    cbsa = db.Column(db.Integer)
+    metro = db.Column(db.String(255))
+    metro_state = db.Column(db.String(255))
+    metro_population = db.Column(db.Integer)
+    metro_aqi = db.Column(db.Integer)
+    metro_one_br_price = db.Column(db.Integer)
+    metro_two_br_price = db.Column(db.Integer)
+    metro_unemployment = db.Column(db.Float)
+    metro_avg_nwi = db.Column(db.Float)
+    state_min_wage = db.Column(db.Float)
+    mj_legal_status = db.Column(db.String(255))
+    mj_medicinal = db.Column(db.String(255))
+    mj_decriminalized = db.Column(db.String(255))
+    state_one_br_price = db.Column(db.Integer)
+    state_two_br_price = db.Column(db.Integer)
+    city_population = db.Column(db.Integer)
+    city_density = db.Column(db.Float)
 
     def serialize(self):
         return {
@@ -100,22 +110,40 @@ class CombinedCityData(Base):
             'state_two_br_price': self.state_two_br_price            
         }
 
-class Favorites(Base):
+
+class Favorites(db.Model):
     __tablename__ = 'favorites'
 
-    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
-    city_id = Column(Integer, ForeignKey('combined_city_data.id'), primary_key=True)
+    user_id = db.Column(db.Integer, ForeignKey('user.id'), primary_key=True)
+    city_id = db.Column(db.Integer, ForeignKey('combined_city_data.id'), primary_key=True)
 
-    user = relationship('User', backref='favorites')
-    city = relationship('CombinedCityData', backref='favorites')
+    user = db.relationship('User', backref=db.backref('favorites', overlaps="user_parent"))
+    city = db.relationship('CombinedCityData', backref='favorites')
     
     def serialize(self):
         return {
-            'user_id': self.user_id,
-            'city_id': self.city_id,
-            'user': self.user.serialize(),
             'city': self.city.serialize()
         }
     
+class RevokedToken(db.Model):
+    __tablename__ = 'revoked_tokens'
+
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(120), unique=True, nullable=False)
+
+    def __init__(self, jti):
+        self.jti = jti
+
+    @classmethod
+    def is_jti_blacklisted(cls, jti):
+        query = cls.query.filter_by(jti=jti).first()
+        return bool(query)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'jti': self.jti
+        }
+
 # close the connection
 cnx.close()
