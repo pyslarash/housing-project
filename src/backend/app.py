@@ -67,7 +67,7 @@ def create_user():
 
     # If username and email do not exist, create new user
     password_hash = generate_password_hash(request_body_user["password"])
-    user_add = User(username=request_body_user["username"], email=request_body_user["email"], password_hash=password_hash, type=request_body_user["type"])
+    user_add = User(username=request_body_user["username"], email=request_body_user["email"], password_hash=password_hash, type=request_body_user["type"], logged_in=True)
     session.add(user_add)
     session.commit()
 
@@ -131,6 +131,11 @@ def logout():
         response = make_response(jsonify({'message': 'User not found'}), 404)
         response.headers['Content-Type'] = 'application/json'
         return response
+
+    # Update user's logged_in status to False
+    existing_user = User.query.filter_by(id=current_user['id']).first()
+    existing_user.logged_in = False
+    db.session.commit()
 
     # Check if the token has already been blacklisted
     if RevokedToken.is_jti_blacklisted(jti):
