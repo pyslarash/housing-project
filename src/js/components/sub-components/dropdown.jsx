@@ -20,13 +20,11 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-export default function Dropdown({ name, columnName, questionMarkText, trueValue, falseValue }) {
+export default function Dropdown({ name, columnName, questionMarkText, trueValue, falseValue, onStatusChange, isItActive }) {
   const [value, setValue] = useState(null);
   const [isActive, setIsActive] = useState(false);
-  const [listArray, setListArray] = useState(["It doesn't matter"]);
+  const [listArray, setListArray] = useState(['']);
   const URL = "http://localhost:5000"; // Defining the database URL
-
-
 
   useEffect(() => {
     if (listArray) {
@@ -37,17 +35,27 @@ export default function Dropdown({ name, columnName, questionMarkText, trueValue
   const handleActiveToggle = () => {
     setIsActive(!isActive);
     if (!isActive) { // make API request only if the toggle is being turned on
-        axios.get(`${URL}/column_values?column_name=${columnName}`)
+      axios.get(`${URL}/column_values?column_name=${columnName}`)
         .then((response) => {
-          const formattedListArray = ["It doesn't matter", ...response.data.values];
+          const formattedListArray = response.data.values;
           setListArray(formattedListArray.map(item => item === "TRUE" ? trueValue : item === "FALSE" ? falseValue : item));
+          if (typeof trueValue !== 'undefined') {
+            onStatusChange(trueValue);
+          } else {
+            onStatusChange(formattedListArray[0]);
+          }
         })
-          .catch((error) => console.log(error));
+        .catch((error) => console.log(error));
+      isItActive(!isActive);
+    } else {
+      onStatusChange(null);
+      isItActive(!isActive);
     }
-  };
+  };  
 
   const handleSelectChange = (event) => {
     setValue(event.target.value);
+    onStatusChange(event.target.value);
   };
 
   return (

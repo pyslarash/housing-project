@@ -14,11 +14,12 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const Checkmark = ({ name, columnName, questionMarkText }) => {
+const Checkmark = ({ name, questionMarkText, onCheckingChange }) => {
   const [isChecked, setIsChecked] = useState(false);
 
   const handleChange = (event) => {
     setIsChecked(event.target.checked);
+    onCheckingChange(!isChecked);
   };
 
   return (

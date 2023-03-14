@@ -7,14 +7,13 @@ import secrets
 from flask_sqlalchemy import SQLAlchemy
 import mysql.connector # Connecting to MySQL DB
 
+app = Flask(__name__)
+db = SQLAlchemy()
+
 # create a connection to the MySQL server in XAMPP
 cnx = mysql.connector.connect(user='pyslarash', password='!FancyPass123$',
                               host='localhost',
                               database='housing_project')
-
-app = Flask(__name__)
-db = SQLAlchemy()
-
 class User(db.Model):
     __tablename__ = 'user'
 

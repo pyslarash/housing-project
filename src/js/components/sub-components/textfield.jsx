@@ -20,7 +20,7 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const TextField = ({ name, columnName, questionMarkText }) => {
+const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange, isItActive }) => {
   const [isActive, setIsActive] = useState(false);
   const [isNAChecked, setIsNAChecked] = useState(false);
   const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
@@ -39,6 +39,7 @@ const TextField = ({ name, columnName, questionMarkText }) => {
   const handleInputChange = (event) => {
     const newValue = event.target.value === '' ? '' : Number(event.target.value);
     setValue(newValue);
+    onMinChange(newValue);
   };
 
   const handleActiveToggle = () => {
@@ -48,22 +49,28 @@ const TextField = ({ name, columnName, questionMarkText }) => {
       .get(`${URL}/column_review?column_name=${columnName}`)
       .then(response => {
         setMinValue(response.data.min_value);
+        onMinChange(response.data.min_value);
         setIsNAChecked(response.data.null_values_exist);
+        onNAChange(response.data.null_values_exist);
         setIsNADisabled(!response.data.null_values_exist);
         console.log(response.data)
       })
       .catch(error => {
         console.error(error);
-      });
+      });      
+      isItActive(!isActive);
+    }
+    else {
+      onMinChange(null);
+      onNAChange(null);
+      isItActive(false);
     }
   };
 
   const handleNACheck = () => {
     if (isActive && !isNADisabled) {
       setIsNAChecked(!isNAChecked);
-      if (!isNAChecked) {
-        setValue(minValue || 0);
-      }
+      onNAChange(!isNAChecked);
     }
   };
 
@@ -74,7 +81,7 @@ const TextField = ({ name, columnName, questionMarkText }) => {
           <Typography id="input-slider" gutterBottom>
             {name}
             <Tooltip title={questionMarkText}>
-              <QuestionMark title={columnName} />
+              <QuestionMark />
             </Tooltip>
           </Typography>
         </Grid>

@@ -31,7 +31,9 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
 export default function SelectMany({
   name,
   columnName,
-  questionMarkText
+  questionMarkText,
+  onSelectingChange,
+  isItActive
   }) {
   const [value, setValue] = useState([]);
   const [isActive, setIsActive] = useState(false);
@@ -46,21 +48,27 @@ export default function SelectMany({
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
-    if (!isActive) { // make API request only if the toggle is being turned on
-        axios.get(`${URL}/column_values?column_name=${columnName}`)
-          .then((response) => {
-            const sortedValues = response.data.values.sort();
-            setListArray(["It doesn't matter", ...sortedValues])
-          })
-          .catch((error) => console.log(error));
+    if (!isActive) {
+      axios
+        .get(`${URL}/column_values?column_name=${columnName}`)
+        .then((response) => {
+          const sortedValues = response.data.values.sort();
+          setListArray(sortedValues);
+        })
+        .catch((error) => console.log(error));
+    } else {
+      setListName([]);
+      onSelectingChange(null);
     }
+    isItActive(!isActive);
   };
 
-  const handleSelectChange = (event) => {
-    setValue(event.target.value);
-  };
+  // const handleSelectChange = (event) => {
+  //   setValue(event.target.value);
+  // };
 
   const [listName, setListName] = useState([]);
+
   const handleChangeMultiple = (event) => {
     const { options } = event.target;
     const value = [];
@@ -70,7 +78,8 @@ export default function SelectMany({
       }
     }
     setListName(value);
-  };
+    onSelectingChange(value);
+    };
 
   return (
     <Box sx={{ width: 300 }}>
