@@ -465,6 +465,16 @@ def get_user_favorites(user_id):
         # Serialize the favorites data and return it as JSON
         serialized_favorites = [favorite.serialize() for favorite in favorites]
         return jsonify(serialized_favorites), 200
+    
+#THIS API END POINT GETS A CITY BY ID
+@app.route('/city_data/<int:id>')
+def get_city_data(id):
+    city_data = CombinedCityData.query.filter_by(id=id).first()
+
+    if not city_data:
+        return jsonify({'error': 'City data not found.'}), 404
+
+    return jsonify(city_data.serialize())
 
 #THIS IS THE FILTER FOR THE DATABASE
 @app.route('/filtered_city_data', methods=['GET'])

@@ -2,8 +2,15 @@ import { Container, Typography } from "@mui/material";
 import { Grid } from "@mui/material";
 import Results from "./results";
 import SearchBox from "./searchbox";
+import React, {useState} from "react";
 
 const Search = () => {
+    const [resultsData, setResultsData] = useState([]); // Setting state for the results that we searched for
+
+    const handleResults = (data) => {
+      setResultsData(data);
+    };
+
     return (
         <Container sx={{
             display: 'flex',
@@ -17,14 +24,14 @@ const Search = () => {
               padding: '30px',
               marginTop: '30px'
             }}>
-              <SearchBox />
+              <SearchBox searchedData={handleResults} />
             </Grid>
             <Grid container sx={{
               justifyContent: 'center',
               alignItems: 'center',
               padding: '20px'
             }}>
-              <Results />
+              <Results results={resultsData} />
             </Grid>
           </Container>
     )

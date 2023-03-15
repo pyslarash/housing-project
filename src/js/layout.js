@@ -5,6 +5,7 @@ import Contact from './components/contact';
 import Search from './components/search';
 import Signup from './components/signup';
 import Login from './components/login';
+import SingleCity from './components/single-city';
 
 const Layout = () => {
   const basename = process.env.BASENAME || '';
@@ -17,6 +18,7 @@ const Layout = () => {
           <Route path="/" element={<Search />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/:id" element={<SingleCity />} />
         </Routes>
       </BrowserRouter>
   );

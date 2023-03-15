@@ -13,7 +13,8 @@ import axios from 'axios';
 
 
 
-const SearchBox = () => {
+const SearchBox = ({searchedData}) => {
+    const URL = "http://localhost:5000";
 
     // Declaring state variables for all of the subcomponents
 
@@ -288,9 +289,9 @@ const SearchBox = () => {
       if (stateMinWageMin === null) {min = 0} else {min = stateMinWageMin};
       if (stateMinWageMax === null) {max = 0} else {max = stateMinWageMax};
       queryString += "state_min_wage_min=" + min + "&" + "state_min_wage_max=" + max + "&";
-      if (stateMinWageIsNA === true) {
-        queryString += "state_min_wage_null_is_ok=true&"
-      } else { queryString += "state_min_wage_null_is_ok=false&" }
+      // if (stateMinWageIsNA === true) {
+      //   queryString += "state_min_wage_null_is_ok=true&"
+      // } else { queryString += "state_min_wage_null_is_ok=false&" }
     }
 
     // Adding state 1 bed cost
@@ -315,12 +316,12 @@ const SearchBox = () => {
       } else { queryString += "state_two_br_price_null_is_ok=false&" }
     }
 
-    console.log(stateMJStatus);
-    console.log(stateMJStatusIsActive);
-    console.log(stateMJMedicinalStatus);
-    console.log(stateMJMedicinalStatusIsActive);
-    console.log(stateMJCriminalStatus);
-    console.log(stateMJCriminalStatusIsActive);
+    // console.log(stateMJStatus);
+    // console.log(stateMJStatusIsActive);
+    // console.log(stateMJMedicinalStatus);
+    // console.log(stateMJMedicinalStatusIsActive);
+    // console.log(stateMJCriminalStatus);
+    // console.log(stateMJCriminalStatusIsActive);
 
     // Marijuana legal status
 
@@ -347,6 +348,18 @@ const SearchBox = () => {
     }
     
     console.log(queryString);
+
+    // Making an API request to get the data based on the query string we created
+    const handleSearch = () => {
+      axios.get(`${URL}/filtered_city_data?${queryString}`)
+        .then((response) => {
+          searchedData(response.data);
+          console.log(response.data)
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
 
     return (
       <>
@@ -406,7 +419,7 @@ const SearchBox = () => {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button sx={{ width: '200px', height: '60px', p: 3, fontSize: '24px' }} variant="contained" size="large">
+            <Button sx={{ width: '200px', height: '60px', p: 3, fontSize: '24px' }} variant="contained" size="large" onClick={handleSearch}>
               Search
             </Button>
           </Box>
