@@ -10,7 +10,7 @@ import SelectMany from './sub-components/select-many';
 import Button from '@mui/material/Button';
 import { useSearch } from './hooks/usesearch';
 import { useDispatch, useSelector } from "react-redux";
-import filterSlice, {
+import {
   setCityPopulationMin, setCityPopulationMax, setCityPopulationIsNA, setCityPopulationIsActive, setCityDensityMin,
   setCityDensityMax, setCityDensityIsNA, setCityDensityIsActive, setCityMedianIncomeMin, setCityMedianIncomeMax, setCityMedianIncomeIsNA,
   setCityMedianIncomeIsActive, setCityViolentCrimeMin, setCityViolentCrimeMax, setCityViolentCrimeIsNA, setCityViolentCrimeIsActive,
@@ -28,7 +28,6 @@ import filterSlice, {
 } from '../store/searchBoxSlice';
 
 const SearchBox = ({ searchedData }) => {
-  const URL = "http://localhost:5000";
   const { handleSearch } = useSearch();
   const dispatch = useDispatch();
 

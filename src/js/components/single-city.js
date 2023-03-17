@@ -11,14 +11,12 @@ import WeatherWindow from './sub-components/weatherwindow';
 import SunriseSunset from './sub-components/sunrisesunset';
 import DbTable from './sub-components/dbtable';
 import CityImages from './sub-components/cityimage';
-import { BD_URL, GOOGLE_API_KEY, GOOGLE_CSE_ID } from "../keys";
-import CryptoJS from 'crypto-js';
 import Housing from './sub-components/housing';
 
 
-const API_KEY = CryptoJS.AES.decrypt(GOOGLE_API_KEY, "secret_key").toString(CryptoJS.enc.Utf8);
-const URL = CryptoJS.AES.decrypt(BD_URL, "secret_key").toString(CryptoJS.enc.Utf8);
-const CSE_ID = CryptoJS.AES.decrypt(GOOGLE_CSE_ID, "secret_key").toString(CryptoJS.enc.Utf8);
+const API_KEY = process.env.ENV_GOOGLE_API_KEY;
+const URL = process.env.ENV_BD_URL;
+const CSE_ID = process.env.ENV_GOOGLE_CSE_ID;
 
 const SingleCity = () => {
     const { id } = useParams();

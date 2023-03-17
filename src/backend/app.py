@@ -1,22 +1,17 @@
+
 import os
+from dotenv import load_dotenv
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy import create_engine
-from cryptography.fernet import Fernet
-import keys
-from keys import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE
 
-# Read the secret key from the file
-with open("secrets.key", "rb") as f:
-    secret_key = f.read()
-
-# Decrypt the credentials
-cipher_suite = Fernet(secret_key)
+# Load environment variables from .env file
+load_dotenv()
 
 # Database information
-db_username = cipher_suite.decrypt(keys.DB_USER.encode()).decode()
-db_password = cipher_suite.decrypt(keys.DB_PASSWORD.encode()).decode()
-db_host = cipher_suite.decrypt(keys.DB_HOST.encode()).decode()
-db_name = cipher_suite.decrypt(keys.DB_DATABASE.encode()).decode()
+db_username = os.environ.get('ENV_DB_USER')
+db_password = os.environ.get('ENV_DB_PASSWORD')
+db_host = os.environ.get('ENV_DB_HOST')
+db_name = os.environ.get('ENV_DB_DATABASE')
 
 db_uri = f"mysql://{db_username}:{db_password}@{db_host}"
 

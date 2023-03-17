@@ -1,3 +1,5 @@
+// This page shows up when 404 Not Found happens
+
 import notfoundImage from "../img/notfound.png";
 
 const NotFound = () => {

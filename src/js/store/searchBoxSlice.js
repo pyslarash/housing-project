@@ -1,3 +1,5 @@
+// Slice for the component SearchBox. We need to store the search in case a user goes to another page.
+
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {

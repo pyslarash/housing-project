@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from flask import Flask
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, Float, Text, ForeignKey
 from sqlalchemy.orm import relationship
@@ -6,24 +7,17 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import query
 from flask_sqlalchemy import SQLAlchemy
 import mysql.connector # Connecting to MySQL DB
-from cryptography.fernet import Fernet
-import keys
-from keys import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE
 
-# Read the secret key from the file
-with open("secrets.key", "rb") as f:
-    secret_key = f.read()
-
-# Decrypt the credentials
-cipher_suite = Fernet(secret_key)
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 db = SQLAlchemy()
 
 # create a connection to the MySQL server in XAMPP
-cnx = mysql.connector.connect(user=cipher_suite.decrypt(keys.DB_USER.encode()).decode(), password=cipher_suite.decrypt(keys.DB_PASSWORD.encode()).decode(),
-                              host=cipher_suite.decrypt(keys.DB_HOST.encode()).decode(),
-                              database=cipher_suite.decrypt(keys.DB_DATABASE.encode()).decode())
+cnx = mysql.connector.connect(user=os.environ.get('ENV_DB_USER'), password=os.environ.get('ENV_DB_PASSWORD'),
+                              host=os.environ.get('ENV_DB_HOST'),
+                              database=os.environ.get('ENV_DB_DATABASE'))
 class User(db.Model):
     __tablename__ = 'user'
 

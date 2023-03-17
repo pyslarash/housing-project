@@ -1,4 +1,9 @@
+import os
+from dotenv import load_dotenv
 from flask_jwt_extended import JWTManager
+
+# Load environment variables from .env file
+load_dotenv()
 
 def configure_jwt(app):
     from models import db, User
@@ -12,6 +17,6 @@ def configure_jwt(app):
             return None
 
     # Might want to keep it in the keys
-    app.config['JWT_SECRET_KEY'] = 'brlBudeglbathI7rozlphophl8p9friwov+hucruchuchochltr6sin5cac6iwri'
+    app.config['JWT_SECRET_KEY'] = os.environ.get('ENV_JWT_SECRET_KEY')
     jwt = JWTManager(app)
     jwt.user_identity_loader(user_identity_lookup)

@@ -1,10 +1,8 @@
 import { useDispatch } from 'react-redux';
 import { setResultsData } from '../../store/searchSlice';
 import axios from 'axios';
-import { BD_URL } from "../../keys";
-import CryptoJS from 'crypto-js';
 
-const URL = CryptoJS.AES.decrypt(BD_URL, "secret_key").toString(CryptoJS.enc.Utf8);
+const URL = process.env.ENV_BD_URL;
 
 // I couldn't call useDispatch within a function, so I had to do this instead
 

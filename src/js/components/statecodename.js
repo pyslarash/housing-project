@@ -1,3 +1,5 @@
+// This component replaces state codes with full state names
+
 const StateName = (stateCode) => {
   let stateName;
 
