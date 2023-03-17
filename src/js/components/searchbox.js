@@ -10,11 +10,14 @@ import SelectMany from './sub-components/select-many';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import axios from 'axios';
-
+import { useSearch } from './hooks/usesearch';
+import { useDispatch, useSelector } from "react-redux";
 
 
 const SearchBox = ({searchedData}) => {
     const URL = "http://localhost:5000";
+    const { handleSearch } = useSearch();
+    const dispatch = useDispatch();
 
     // Declaring state variables for all of the subcomponents
 
@@ -350,16 +353,10 @@ const SearchBox = ({searchedData}) => {
     console.log(queryString);
 
     // Making an API request to get the data based on the query string we created
-    const handleSearch = () => {
-      axios.get(`${URL}/filtered_city_data?${queryString}`)
-        .then((response) => {
-          searchedData(response.data);
-          console.log(response.data)
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
+  const handleSubmit = (e, queryString) => {
+    e.preventDefault();
+    handleSearch(queryString);
+  };
 
     return (
       <>
@@ -419,7 +416,7 @@ const SearchBox = ({searchedData}) => {
             </Box>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-            <Button sx={{ width: '200px', height: '60px', p: 3, fontSize: '24px' }} variant="contained" size="large" onClick={handleSearch}>
+          <Button sx={{ width: '200px', height: '60px', p: 3, fontSize: '24px' }} variant="contained" size="large" onClick={(e) => handleSubmit(e, queryString)}>
               Search
             </Button>
           </Box>

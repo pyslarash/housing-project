@@ -24,11 +24,11 @@ const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange
   const [isActive, setIsActive] = useState(false);
   const [isNAChecked, setIsNAChecked] = useState(false);
   const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
-  const [value, setValue] = useState(minValue || 0);  
+  const [value, setValue] = useState(minValue || 0);
   const [isNADisabled, setIsNADisabled] = useState(false);
   const URL = "http://localhost:5000"; // Defining the database URL
 
- 
+
 
   useEffect(() => {
     if (minValue !== null) { // Render only when the API call has completed
@@ -45,19 +45,19 @@ const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange
   const handleActiveToggle = () => {
     setIsActive(!isActive);
     if (!isActive) { // make API request only if the toggle is being turned on
-    axios
-      .get(`${URL}/column_review?column_name=${columnName}`)
-      .then(response => {
-        setMinValue(response.data.min_value);
-        onMinChange(response.data.min_value);
-        setIsNAChecked(response.data.null_values_exist);
-        onNAChange(response.data.null_values_exist);
-        setIsNADisabled(!response.data.null_values_exist);
-        console.log(response.data)
-      })
-      .catch(error => {
-        console.error(error);
-      });      
+      axios
+        .get(`${URL}/column_review?column_name=${columnName}`)
+        .then(response => {
+          setMinValue(response.data.min_value);
+          onMinChange(response.data.min_value);
+          setIsNAChecked(response.data.null_values_exist);
+          onNAChange(response.data.null_values_exist);
+          setIsNADisabled(!response.data.null_values_exist);
+          console.log(response.data)
+        })
+        .catch(error => {
+          console.error(error);
+        });
       isItActive(!isActive);
     }
     else {

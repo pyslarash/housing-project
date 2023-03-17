@@ -51,7 +51,7 @@ function Navbar() {
   };
 
   return (
-    <AppBar position="static">
+    <AppBar className="header" position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <img src={logo} alt="Logo" width="50" height="50" />
@@ -67,7 +67,7 @@ function Navbar() {
               marginLeft: '20px',
               color: 'inherit',
               textDecoration: 'none',
-              fontFamily: 'k2D, sans-serif', 
+              fontFamily: 'k2D, sans-serif',
               fontSize: '24px',
             }}
           >
@@ -124,7 +124,7 @@ function Navbar() {
               fontWeight: 700,
               color: 'inherit',
               textDecoration: 'none',
-              fontFamily: 'k2D, sans-serif', 
+              fontFamily: 'k2D, sans-serif',
               fontSize: '24px',
             }}
           >

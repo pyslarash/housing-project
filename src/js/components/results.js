@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { memo, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -21,6 +22,8 @@ import Switch from '@mui/material/Switch';
 import TurnedInIcon from '@mui/icons-material/TurnedIn';
 import { visuallyHidden } from '@mui/utils';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from "react-redux";
+import searchSlice, { setOrderBy, setOrder, setSelected, setRowsPerPage, setDense, setPage, setResultsData } from '../store/searchSlice.js';
 
 let cityId = 0;
 function createData(city, state, cityPopulation, cityDensity, metroPopulation, id) {
@@ -64,7 +67,7 @@ function stableSort(array, comparator) {
   return stabilizedThis.map((el) => el[0]);
 }
 
-function EnhancedTableHead(props) {
+const EnhancedTableHead = React.memo((props) => {
   const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
     props;
   const createSortHandler = (property) => (event) => {
@@ -101,7 +104,7 @@ function EnhancedTableHead(props) {
       numeric: true,
       disablePadding: false,
       label: 'Metro Population',
-    },    
+    },
   ];
 
   return (
@@ -142,8 +145,7 @@ function EnhancedTableHead(props) {
       </TableRow>
     </TableHead>
   );
-}
-
+});
 
 EnhancedTableHead.propTypes = {
   numSelected: PropTypes.number.isRequired,
@@ -187,14 +189,14 @@ function EnhancedTableToolbar(props) {
           Cities
         </Typography>
       )}
-    {/* This is the Save button */}
-    {numSelected > 0 && (
-      <Tooltip title="Save">
-        <IconButton>
-          <TurnedInIcon />
-        </IconButton>
-      </Tooltip>
-    )}
+      {/* This is the Save button */}
+      {numSelected > 0 && (
+        <Tooltip title="Save">
+          <IconButton>
+            <TurnedInIcon />
+          </IconButton>
+        </Tooltip>
+      )}
     </Toolbar>
   );
 }
@@ -203,28 +205,33 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
-export default function Results({ results }) {
-  const [order, setOrder] = React.useState('asc');
-  const [orderBy, setOrderBy] = React.useState('cityPopulation');
-  const [selected, setSelected] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-
-  const rows = results.map(cityData => createData(cityData.city, cityData.state, cityData.city_population, cityData.city_density, cityData.metro_population, cityData.id));
+const Results = ({ results }) => {
+  const resultsData = useSelector(state => state.search.resultsData);
+  const order = useSelector(state => state.search.order);
+  const orderBy = useSelector(state => state.search.orderBy);
+  const selected = useSelector(state => state.search.selected);
+  const page = useSelector(state => state.search.page);
+  const dense = useSelector(state => state.search.dense);
+  const rowsPerPage = useSelector(state => state.search.rowsPerPage);
+  
+  const dispatch = useDispatch();
+  
+  const rows = useMemo(() => {
+    return resultsData.map(cityData => createData(cityData.city, cityData.state, cityData.city_population, cityData.city_density, cityData.metro_population, cityData.id));
+  }, [resultsData]);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
+    dispatch(setOrder(isAsc ? 'desc' : 'asc'));
+    dispatch(setOrderBy(property));
   };
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      setSelected(rows.map((row) => row.city));
+      dispatch(setSelected(rows.map((row) => row.city)));
       return;
     }
-    setSelected([]);
+    dispatch(setSelected([]));
   };
 
   const handleClick = (event, name) => {
@@ -243,22 +250,21 @@ export default function Results({ results }) {
         selected.slice(selectedIndex + 1),
       );
     }
-  
-    setSelected(newSelected);
-    console.log('Selected rows:', newSelected);
+
+    dispatch(setSelected(newSelected));
   };
 
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+    dispatch(setPage(newPage));
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    dispatch(setRowsPerPage(parseInt(event.target.value, 10)));
+    dispatch(setPage(0));
   };
 
   const handleChangeDense = (event) => {
-    setDense(event.target.checked);
+    dispatch(setDense(event.target.checked));
   };
 
   const isSelected = (name) => selected.indexOf(name) !== -1;
@@ -267,12 +273,12 @@ export default function Results({ results }) {
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-    return (
-      <Box sx={{ width: '100%' }}>
-        <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar numSelected={selected.length} />
-          <TableContainer>
-            {rows.length === 0 ? (
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Paper sx={{ width: '100%', mb: 2 }}>
+        <EnhancedTableToolbar numSelected={selected.length} />
+        <TableContainer>
+          {rows.length === 0 ? (
             <Typography variant="body1" align="center">
               Sorry, it seems like there are no results.
             </Typography>
@@ -296,11 +302,10 @@ export default function Results({ results }) {
                   .map((row, index) => {
                     const isItemSelected = isSelected(row.city);
                     const labelId = `enhanced-table-checkbox-${index}`;
-  
+
                     return (
                       <TableRow
-                        hover
-                        onClick={(event) => handleClick(event, row.city)}
+                        hover                        
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -310,6 +315,7 @@ export default function Results({ results }) {
                         <TableCell padding="checkbox">
                           <Checkbox
                             color="primary"
+                            onClick={(event) => handleClick(event, row.city)}
                             checked={isItemSelected}
                             inputProps={{
                               'aria-labelledby': labelId,
@@ -328,7 +334,7 @@ export default function Results({ results }) {
                         {/* Some values can be null, so when we are displaying them, we are showing N/A instead. */}
                         <TableCell align="right">{row.cityPopulation.toLocaleString()}</TableCell>
                         <TableCell align="right">{row.cityDensity.toLocaleString()}</TableCell>
-                        <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>                        
+                        <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>
                       </TableRow>
                     );
                   })}
@@ -343,21 +349,23 @@ export default function Results({ results }) {
                 )}
               </TableBody>
             </Table>)}
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50, 100]}
-            component="div"
-            count={rows.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-        <FormControlLabel
-          control={<Switch checked={dense} onChange={handleChangeDense} />}
-          label="Dense padding"
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          component="div"
+          count={rows.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
         />
-      </Box>
-    );
+      </Paper>
+      <FormControlLabel
+        control={<Switch checked={dense} onChange={handleChangeDense} />}
+        label="Dense padding"
+      />
+    </Box>
+  );
 }
+
+export default memo(Results);

@@ -3,14 +3,10 @@ import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { Input, Switch, Tooltip, Select, MenuItem } from '@mui/material';
+import { Switch, Tooltip, Select, MenuItem } from '@mui/material';
 import { useState, useEffect } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
 import axios from 'axios';
-
-const StyledInput = styled(Input)(({ theme }) => ({
-  width: '50px',
-}));
 
 const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   marginLeft: theme.spacing(1),
@@ -51,7 +47,7 @@ export default function Dropdown({ name, columnName, questionMarkText, trueValue
       onStatusChange(null);
       isItActive(!isActive);
     }
-  };  
+  };
 
   const handleSelectChange = (event) => {
     setValue(event.target.value);

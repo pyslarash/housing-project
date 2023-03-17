@@ -22,25 +22,25 @@ const Login = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-  
+
     // Send login request to backend API using axios
     axios.post(`${API_URL}/login`, {
       username: usernameOrEmail,
       password: password
     })
-    .then((response) => {
-      if (response.status === 200) {
-        // If the login request is successful, set the access token in the local storage and redirect to the home page
-        localStorage.setItem('access_token', response.data.access_token);
-        window.location.href = '/';
-      } else {
-        // If the login request fails, display an error message
-        console.log(response.data.message);
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+      .then((response) => {
+        if (response.status === 200) {
+          // If the login request is successful, set the access token in the local storage and redirect to the home page
+          localStorage.setItem('access_token', response.data.access_token);
+          window.location.href = '/';
+        } else {
+          // If the login request fails, display an error message
+          console.log(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (

@@ -7,7 +7,10 @@ const WeatherHistoricChart = ({ data }) => {
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="time" type="number" domain={['dataMin', 'dataMax']} tickFormatter={(unixTime) => new Date(unixTime).toLocaleDateString()} />
         <YAxis yAxisId="left" type="number" domain={['auto', 'auto']} tickCount={10} />
-        <Tooltip />
+        <Tooltip
+          formatter={(value, name, props) => `${props.payload.Temperature.toFixed(1)} °F`}
+          labelFormatter={(unixTime) => new Date(unixTime).toLocaleString()}
+        />
         <Legend />
         <Line yAxisId="left" type="monotone" dataKey="Temperature" stroke="#1b90ce" />
       </LineChart>

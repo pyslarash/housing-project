@@ -4,21 +4,14 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import {
-  Input,
   Switch,
   Tooltip,
   Select,
-  MenuItem,
   FormControl,
-  InputLabel,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
 import axios from 'axios';
-
-const StyledInput = styled(Input)(({ theme }) => ({
-  width: '50px',
-}));
 
 const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   marginLeft: theme.spacing(1),
@@ -34,7 +27,7 @@ export default function SelectMany({
   questionMarkText,
   onSelectingChange,
   isItActive
-  }) {
+}) {
   const [value, setValue] = useState([]);
   const [isActive, setIsActive] = useState(false);
   const [listArray, setListArray] = useState(["It doesn't matter"]);
@@ -79,7 +72,7 @@ export default function SelectMany({
     }
     setListName(value);
     onSelectingChange(value);
-    };
+  };
 
   return (
     <Box sx={{ width: 300 }}>

@@ -11,6 +11,7 @@ def configure_jwt(app):
         else:
             return None
 
+    # Might want to keep it in the keys
     app.config['JWT_SECRET_KEY'] = 'brlBudeglbathI7rozlphophl8p9friwov+hucruchuchochltr6sin5cac6iwri'
     jwt = JWTManager(app)
     jwt.user_identity_loader(user_identity_lookup)

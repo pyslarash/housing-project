@@ -31,7 +31,7 @@ export default function MinMax({ name, questionMarkText, columnName, onMinChange
   const [apiCallMade, setApiCallMade] = useState(false); // Checking whether we already made an API call using toggle
   const URL = "http://localhost:5000"; // Defining the database URL
 
-  
+
 
   useEffect(() => {
     if (minValue !== null && maxValue !== null) { // Render only when the API call has completed
@@ -44,7 +44,7 @@ export default function MinMax({ name, questionMarkText, columnName, onMinChange
     const updatedValue = [...value];
     updatedValue[index] = newValue;
     setValue(updatedValue);
-  
+
     if (index === 0) {
       setMinValue(newValue);
       onMinChange(newValue);
@@ -69,7 +69,7 @@ export default function MinMax({ name, questionMarkText, columnName, onMinChange
             onNAChange(response.data.null_values_exist); // Sending it to the SearchBox
             setIsNADisabled(!response.data.null_values_exist); // Making the checkbox disabled if needed
             setApiCallMade(true); // Marking as API call made
-            console.log(response.data)
+            // console.log(response.data)
           })
           .catch(error => {
             console.error(error);
@@ -87,7 +87,7 @@ export default function MinMax({ name, questionMarkText, columnName, onMinChange
       isItActive(false);
     }
   };
-  
+
 
   const handleNACheck = () => {
     if (isActive && !isNADisabled) {
@@ -95,8 +95,8 @@ export default function MinMax({ name, questionMarkText, columnName, onMinChange
       onNAChange(!isNAChecked);
     }
   };
-  
-  
+
+
 
   return (
     <Box sx={{ width: 300 }}>
