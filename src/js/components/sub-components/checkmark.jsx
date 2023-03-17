@@ -14,12 +14,13 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const Checkmark = ({ name, questionMarkText, onCheckingChange }) => {
-  const [isChecked, setIsChecked] = useState(false);
+const Checkmark = ({ name, questionMarkText, onCheckingChange, infoUpdate }) => {
+  const [isChecked, setIsChecked] = useState(infoUpdate);
 
   const handleChange = (event) => {
-    setIsChecked(event.target.checked);
-    onCheckingChange(!isChecked);
+    const newCheckedValue = event.target.checked;
+    setIsChecked(newCheckedValue);
+    onCheckingChange(newCheckedValue);
   };
 
   return (

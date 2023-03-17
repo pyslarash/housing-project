@@ -3,7 +3,7 @@ import Layout from './js/layout';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Helmet } from 'react-helmet';
 import { Provider } from "react-redux";
-import store from "./js/store/store";
+import store from "./js/store/store"
 import "./styles/links.css"
 
 // Can change theme colors here:

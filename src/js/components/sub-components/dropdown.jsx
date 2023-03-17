@@ -16,17 +16,20 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-export default function Dropdown({ name, columnName, questionMarkText, trueValue, falseValue, onStatusChange, isItActive }) {
-  const [value, setValue] = useState(null);
-  const [isActive, setIsActive] = useState(false);
-  const [listArray, setListArray] = useState(['']);
+export default function Dropdown({ name, columnName, questionMarkText, trueValue, falseValue, onStatusChange, isItActive,
+                                                                                status, storeListArray, getListArray, activeChange }) {
+  const [value, setValue] = useState(status);
+  const [isActive, setIsActive] = useState(activeChange);
+  const [listArray, setListArray] = useState(getListArray);
   const URL = "http://localhost:5000"; // Defining the database URL
 
+  console.log("Status: ", status)
+  
   useEffect(() => {
-    if (listArray) {
-      setValue(listArray[0]);
+    if (listArray && status !== undefined) {
+      setValue(status);
     }
-  }, [listArray]);
+  }, [listArray, status]);
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
@@ -34,6 +37,8 @@ export default function Dropdown({ name, columnName, questionMarkText, trueValue
       axios.get(`${URL}/column_values?column_name=${columnName}`)
         .then((response) => {
           const formattedListArray = response.data.values;
+          console.log(formattedListArray)
+          storeListArray(formattedListArray);
           setListArray(formattedListArray.map(item => item === "TRUE" ? trueValue : item === "FALSE" ? falseValue : item));
           if (typeof trueValue !== 'undefined') {
             onStatusChange(trueValue);
@@ -73,7 +78,7 @@ export default function Dropdown({ name, columnName, questionMarkText, trueValue
         <Grid container spacing={2} alignItems="center">
           <Grid item sx={{ width: '100%' }}>
             <Select
-              value={value}
+              value={value === undefined ? '' : value}
               onChange={handleSelectChange}
               labelId="dropdown-label"
               id="dropdown"

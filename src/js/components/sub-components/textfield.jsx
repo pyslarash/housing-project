@@ -20,10 +20,11 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange, isItActive }) => {
-  const [isActive, setIsActive] = useState(false);
-  const [isNAChecked, setIsNAChecked] = useState(false);
-  const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
+const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange, isItActive,
+                                                          min, NAChange, activeChange }) => {
+  const [isActive, setIsActive] = useState(activeChange);
+  const [isNAChecked, setIsNAChecked] = useState(NAChange);
+  const [minValue, setMinValue] = useState(min); // Initialize to null instead of 0
   const [value, setValue] = useState(minValue || 0);
   const [isNADisabled, setIsNADisabled] = useState(false);
   const URL = "http://localhost:5000"; // Defining the database URL

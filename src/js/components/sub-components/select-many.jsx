@@ -26,18 +26,22 @@ export default function SelectMany({
   columnName,
   questionMarkText,
   onSelectingChange,
-  isItActive
+  isItActive,
+  selections,
+  activeChange,
+  storeListArray,
+  getListArray,
 }) {
-  const [value, setValue] = useState([]);
-  const [isActive, setIsActive] = useState(false);
-  const [listArray, setListArray] = useState(["It doesn't matter"]);
+  const [value, setValue] = useState(selections);
+  const [isActive, setIsActive] = useState(activeChange);
+  const [listArray, setListArray] = useState(getListArray);
   const URL = "http://localhost:5000"; // Defining the database URL
 
   useEffect(() => {
-    if (listArray) {
-      setValue([listArray[0]]);
+    if (listArray && selections !== undefined) {
+      setValue(selections);
     }
-  }, [listArray]);
+  }, [listArray, selections]);
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
@@ -47,6 +51,7 @@ export default function SelectMany({
         .then((response) => {
           const sortedValues = response.data.values.sort();
           setListArray(sortedValues);
+          storeListArray(sortedValues);
         })
         .catch((error) => console.log(error));
     } else {
@@ -56,9 +61,9 @@ export default function SelectMany({
     isItActive(!isActive);
   };
 
-  // const handleSelectChange = (event) => {
-  //   setValue(event.target.value);
-  // };
+  const handleSelectChange = (event) => {
+    setValue(event.target.value);
+  };
 
   const [listName, setListName] = useState([]);
 
@@ -98,7 +103,7 @@ export default function SelectMany({
                 id="select-many-native"
                 multiple
                 native
-                value={listName}
+                value={value === undefined ? '' : value}
                 onChange={handleChangeMultiple}
                 inputProps={{ id: 'select-many-native' }}
               >

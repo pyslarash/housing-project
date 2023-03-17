@@ -21,12 +21,13 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-export default function MinMax({ name, questionMarkText, columnName, onMinChange, onMaxChange, onNAChange, isItActive }) {
-  const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
-  const [maxValue, setMaxValue] = useState(null); // Initialize to null instead of 100
+export default function MinMax({ name, questionMarkText, columnName, onMinChange, onMaxChange, onNAChange, isItActive,
+                                                                      minChange, maxChange, NAChange, activeChange }) {
+  const [minValue, setMinValue] = useState(minChange); // Initialize to null instead of 0
+  const [maxValue, setMaxValue] = useState(maxChange); // Initialize to null instead of 100
   const [value, setValue] = useState([0, 100]); // Initialize with default values
-  const [isActive, setIsActive] = useState(false);
-  const [isNAChecked, setIsNAChecked] = useState(false);
+  const [isActive, setIsActive] = useState(activeChange);
+  const [isNAChecked, setIsNAChecked] = useState(NAChange);
   const [isNADisabled, setIsNADisabled] = useState(false);
   const [apiCallMade, setApiCallMade] = useState(false); // Checking whether we already made an API call using toggle
   const URL = "http://localhost:5000"; // Defining the database URL
