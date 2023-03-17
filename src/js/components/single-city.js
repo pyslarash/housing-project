@@ -14,9 +14,9 @@ import CityImages from './sub-components/cityimage';
 import Housing from './sub-components/housing';
 
 
-const API_KEY = process.env.ENV_GOOGLE_API_KEY;
-const URL = process.env.ENV_BD_URL;
-const CSE_ID = process.env.ENV_GOOGLE_CSE_ID;
+const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
+const URL = process.env.REACT_APP_BD_URL;
+const CSE_ID = process.env.REACT_APP_GOOGLE_CSE_ID;
 
 const SingleCity = () => {
     const { id } = useParams();

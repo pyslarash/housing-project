@@ -27,7 +27,7 @@ const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange
   const [minValue, setMinValue] = useState(min); // Initialize to null instead of 0
   const [value, setValue] = useState(minValue || 0);
   const [isNADisabled, setIsNADisabled] = useState(false);
-  const URL = process.env.ENV_BD_URL; // Defining the database URL
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
 
 

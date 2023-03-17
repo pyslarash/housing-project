@@ -35,7 +35,7 @@ export default function SelectMany({
   const [value, setValue] = useState(selections);
   const [isActive, setIsActive] = useState(activeChange);
   const [listArray, setListArray] = useState(getListArray);
-  const URL = process.env.ENV_BD_URL; // Defining the database URL
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
   useEffect(() => {
     if (listArray && selections !== undefined) {

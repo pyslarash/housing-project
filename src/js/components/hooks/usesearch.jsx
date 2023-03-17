@@ -2,7 +2,7 @@ import { useDispatch } from 'react-redux';
 import { setResultsData } from '../../store/searchSlice';
 import axios from 'axios';
 
-const URL = process.env.ENV_BD_URL;
+const URL = process.env.REACT_APP_BD_URL;
 
 // I couldn't call useDispatch within a function, so I had to do this instead
 

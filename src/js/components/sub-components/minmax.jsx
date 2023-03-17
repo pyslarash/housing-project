@@ -30,7 +30,7 @@ export default function MinMax({ name, questionMarkText, columnName, onMinChange
   const [isNAChecked, setIsNAChecked] = useState(NAChange);
   const [isNADisabled, setIsNADisabled] = useState(false);
   const [apiCallMade, setApiCallMade] = useState(false); // Checking whether we already made an API call using toggle
-  const URL = process.env.ENV_BD_URL; // Defining the database URL
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
 
 

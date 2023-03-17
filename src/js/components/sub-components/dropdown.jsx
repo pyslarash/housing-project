@@ -21,7 +21,7 @@ export default function Dropdown({ name, columnName, questionMarkText, trueValue
   const [value, setValue] = useState(status);
   const [isActive, setIsActive] = useState(activeChange);
   const [listArray, setListArray] = useState(getListArray);
-  const URL = process.env.ENV_BD_URL; // Defining the database URL
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
   console.log("Status: ", status)
   
