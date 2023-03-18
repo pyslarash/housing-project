@@ -12,6 +12,7 @@ import SunriseSunset from './sub-components/sunrisesunset';
 import DbTable from './sub-components/dbtable';
 import CityImages from './sub-components/cityimage';
 import Housing from './sub-components/housing';
+import NotFound from '../notfound';
 
 
 const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
@@ -21,6 +22,7 @@ const CSE_ID = process.env.REACT_APP_GOOGLE_CSE_ID;
 const SingleCity = () => {
     const { id } = useParams();
     const [cityData, setCityData] = useState(null);
+    const [responseStatus, setResponseStatus] = useState();
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [wPredChartData, setWPredChartData] = useState([]);
     const [wHistChartData, setWHistChartData] = useState([]);
@@ -36,12 +38,14 @@ const SingleCity = () => {
         const fetchData = async () => {
             try {
                 const response = await axios.get(`${URL}/city_data/${id}`);
+                setResponseStatus(response.request.status)
                 setCityData(response.data);
             } catch (error) {
                 console.log(error);
+                setResponseStatus(error.response.request.status);
             }
         };
-
+        
         fetchData();
     }, [id]);
 
@@ -219,9 +223,15 @@ const SingleCity = () => {
         };
     }, [cityData]);
 
-    if (!cityData) {
-        return <div>Loading...</div>;
-    }
+    console.log(responseStatus);
+
+    if (responseStatus === 200) { 
+        if (!cityData) {
+            return <div>Loading...</div>;
+        }
+    } else if (responseStatus === 404) {
+        return <NotFound />;
+    } else return (<div>Something went wrong</div>)
 
     return (
         <Box sx={{ mb: 4 }}>
