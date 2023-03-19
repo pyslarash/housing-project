@@ -5,29 +5,67 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { setToken, setUsername, setPassword, setLoggedIn, setMessage, setEmail } from '../store/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+
+const API_URL = process.env.REACT_APP_BD_URL;
 
 function Signup() {
-  const [username, setUsername] =useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
+  const token = useSelector(state => state.user.token);
+  const message = useSelector(state => state.user.message);
+  const username = useSelector(state => state.user.username);
+  const password = useSelector(state => state.user.password);
+  const loggedIn = useSelector(state => state.user.loggedIn);
+  const email = useSelector(state => state.user.email);
+  const navigate = useNavigate();
 
   const handleUsernameChange = (event) => {
-    setUsername(event.target.value);
+    dispatch(setUsername(event.target.value));
   };
 
   const handleEmailChange = (event) => {
-    setEmail(event.target.value);
+    dispatch(setEmail(event.target.value));
   };
 
   const handlePasswordChange = (event) => {
-    setPassword(event.target.value);
+    dispatch(setPassword(event.target.value));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Handle the signup logic here, such as sending a signup request to the backend API
-    console.log('Signup clicked');
+
+    try {
+      const response = await axios.post(`${API_URL}/create_user`, {
+        email,
+        username,
+        password,
+        type: 'user'
+      });
+      if (response.status === 200) {
+        dispatch(setToken(response.data.access_token));
+        console.log("My token: ", response.data.access_token)
+        dispatch(setLoggedIn(true));
+        navigate('/profile');
+        // redirect to the home page or any other authenticated page
+      }
+      // handle successful response
+    } catch (error) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        // log user out
+        console.log(error);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        navigate('/signup');
+      } else {
+        // handle other errors
+        console.log(error.response.data.message);
+      }
+    }
   };
+
 
   return (
     <Box

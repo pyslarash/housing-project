@@ -15,6 +15,14 @@ import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logo from "../../img/logo-100.png";
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { setLoggedIn, setToken, setUsername, setPassword } from '../store/userSlice';
+import axios from "axios";
+//import { setLoggedIn, setToken, setEmail, setPassword, setUsername } from "../../store/userSlice";
+
+
+const API_URL = process.env.REACT_APP_BD_URL;
 
 const pages = ['Search', 'Contact'];
 const settings = ['Profile', 'Saves', 'Logout'];
@@ -22,7 +30,14 @@ const settings = ['Profile', 'Saves', 'Logout'];
 function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(false); // Add state for whether the user is logged in or not
+
+  const token = useSelector(state => state.user.token);
+  const username = useSelector(state => state.user.username);
+  const password = useSelector(state => state.user.password);
+  const loggedIn = useSelector(state => state.user.loggedIn);
+  const dispatch = useDispatch();
+
+  const navigate = useNavigate();
 
   const handleOpenDrawer = () => {
     setDrawerOpen(true);
@@ -45,9 +60,26 @@ function Navbar() {
     console.log('Login clicked');
   };
 
-  const handleLogout = () => {
-    // Handle the logout logic here, such as clearing the user session
-    setLoggedIn(false);
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/logout`, null, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        "data": {
+          "username": username,
+          "password": password
+        }
+      }, console.log(token));
+
+      // clear the user's access token from the state
+      dispatch(setToken(null));
+      dispatch(setLoggedIn(false));
+      handleCloseUserMenu();
+      navigate('/')
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -164,33 +196,41 @@ function Navbar() {
                 Login
               </MenuItem>
             )}
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleLogout}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+            {loggedIn && (
+              <Menu
+                sx={{ mt: '45px' }}
+                id="menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
+              >
+                {settings.map((setting) => (
+                  <MenuItem
+                    key={setting}
+                    onClick={
+                      setting === 'Logout' ? handleLogout :
+                        setting === 'Profile' ? () => { navigate('/profile') } :
+                          null}>
+                    <Typography textAlign="center">{setting}</Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            )}
+        </Box>
+      </Toolbar>
+    </Container>
+    </AppBar >
   );
-}
+
+};
 
 export default Navbar;

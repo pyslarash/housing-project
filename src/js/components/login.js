@@ -1,47 +1,46 @@
-import { useState } from 'react';
+import React, { useContext, useState } from "react";
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import axios from 'axios';
+import { useDispatch, useSelector } from "react-redux";
+import userSlice, { setToken, setMessage, setUsername, setPassword, setLoggedIn } from "../store/userSlice";
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
+
 const Login = () => {
-  const [usernameOrEmail, setUsernameOrEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
+  const token = useSelector(state => state.user.token);
+  const message = useSelector(state => state.user.message);
+  const username = useSelector(state => state.user.username);
+  const password = useSelector(state => state.user.password);
+  const loggedIn = useSelector(state => state.user.loggedIn);
+  const navigate = useNavigate();
 
-  const handleUsernameOrEmailChange = (event) => {
-    setUsernameOrEmail(event.target.value);
-  };
-
-  const handlePasswordChange = (event) => {
-    setPassword(event.target.value);
-  };
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
-    // Send login request to backend API using axios
-    axios.post(`${API_URL}/login`, {
-      username: usernameOrEmail,
-      password: password
-    })
-      .then((response) => {
-        if (response.status === 200) {
-          // If the login request is successful, set the access token in the local storage and redirect to the home page
-          localStorage.setItem('access_token', response.data.access_token);
-          window.location.href = '/';
-        } else {
-          // If the login request fails, display an error message
-          console.log(response.data.message);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
+    
+    try {
+      const response = await axios.post(`${API_URL}/login`, {
+        username,
+        password,
       });
-  };
+      if (response.status === 200) {
+        dispatch(setToken(response.data.access_token));
+        console.log("My token: ", response.data.access_token)
+        dispatch(setLoggedIn(true));
+        navigate('/profile');
+        // redirect to the home page or any other authenticated page
+      }
+    } catch (error) {
+      console.log(error.response);
+      alert("There has been an error!");
+    }    
+  }
 
   return (
     <Box sx={{ m: 3 }}>
@@ -55,10 +54,10 @@ const Login = () => {
               <TextField
                 required
                 fullWidth
-                id="usernameOrEmail"
-                label="Username or Email"
-                value={usernameOrEmail}
-                onChange={handleUsernameOrEmailChange}
+                id="username"
+                label="Username"
+                value={username}
+                onChange={(event) => dispatch(setUsername(event.target.value))}
               />
             </Box>
             <Box sx={{ mb: 2 }}>
@@ -69,7 +68,7 @@ const Login = () => {
                 id="password"
                 label="Password"
                 value={password}
-                onChange={handlePasswordChange}
+                onChange={(event) => dispatch(setPassword(event.target.value))}
               />
             </Box>
             <Box sx={{ mb: 2 }}>

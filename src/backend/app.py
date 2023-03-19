@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy import create_engine
+from datetime import datetime
+from jwt.exceptions import ExpiredSignatureError
 
 # Load environment variables from .env file
 load_dotenv()
@@ -32,6 +34,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Favorites, CombinedCityData, RevokedToken
 from datetime import timedelta
 from flask_cors import CORS
+from flask_cors import cross_origin
 from flask_migrate import Migrate
 from flask_mailing import Mail, Message
 from google.oauth2 import id_token
@@ -75,6 +78,7 @@ except Exception as e:
 
 # Define the endpoint for testing the connection
 @app.route('/', methods=['GET'])
+@cross_origin()
 def hello_world():
     if session:
         return 'Hello, World!'
@@ -82,8 +86,18 @@ def hello_world():
         return "Unable to connect to database", 500
 
 # THIS ENDPOINT CREATES A USER
-@app.route('/create_user', methods=['POST'])
+@app.route('/create_user', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def create_user():
+    if request.method == 'OPTIONS':
+        # Handle pre-flight request
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
+    # Handle POST request as usual
     request_body_user = request.get_json()
 
     # Check if username or email already exist
@@ -94,6 +108,9 @@ def create_user():
     if existing_user or existing_email:
         response = make_response(jsonify({'message': 'Username or email already exists'}), 400)
         response.headers['Content-Type'] = 'application/json'
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
     # If username and email do not exist, create new user
@@ -102,15 +119,27 @@ def create_user():
     session.add(user_add)
     session.commit()
 
-    # Create access token for the newly created user
-    access_token = create_access_token(identity={'id': user_add.id, 'type': user_add.type},
-                                        expires_delta=timedelta(hours=1))
+    try:
+        # Create access token for the newly created user with a 1 hour expiration time
+        access_token = create_access_token(identity={'id': user_add.id, 'type': user_add.type},
+                                           expires_delta=timedelta(hours=1))
 
-    # Return the access token and user data in JSON format
-    return jsonify({'access_token': access_token, 'user': user_add.serialize()}), 200
+        # Return the access token and user data in JSON format
+        return jsonify({'access_token': access_token, 'user': user_add.serialize()}), 200
+
+    except ExpiredSignatureError:
+        # If the token is expired, update the user's logged_in status to False
+        user_add.logged_in = False
+        db.session.commit()
+
+        response = make_response(jsonify({'message': 'Token expired. Please log in again.'}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
 
 # THIS ENDPOINT ALLOWS FOR A USER TO LOGIN
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login():
     request_body_user = request.get_json()
 
@@ -119,33 +148,48 @@ def login():
 
     # If username does not exist, return an error
     if not existing_user:
+        print("Error: Invalid username.")
         response = make_response(jsonify({'message': 'Invalid username or password'}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
     # Check if the user is already logged in
     if existing_user.logged_in:
+        print("Error: User already logged in.")
         response = make_response(jsonify({'message': 'User has been logged in already'}), 401)
         response.headers['Content-Type'] = 'application/json'
+        response.headers['WWW-Authenticate'] = 'Bearer error="already_logged_in", error_description="User has been logged in already"'
         return response
 
-    # Check if the password is correct
+# Check if the password is correct
     if not check_password_hash(existing_user.password_hash, request_body_user['password']):
+        print("Error: Invalid password.")
         response = make_response(jsonify({'message': 'Invalid username or password'}), 401)
         response.headers['Content-Type'] = 'application/json'
+        response.headers['WWW-Authenticate'] = 'Bearer error="invalid_credentials", error_description="Invalid username or password"'
         return response
+
 
     # Update user's logged_in status
     existing_user.logged_in = True
     db.session.commit()
 
-    # Create access token for the logged in user with a 1 hour expiration time
-    access_token = create_access_token(identity={'id': existing_user.id, 'type': existing_user.type},
-                                       expires_delta=timedelta(hours=1))
-    
+    try:
+        # Create access token for the logged in user with a 1 hour expiration time
+        access_token = create_access_token(identity={'id': existing_user.id, 'type': existing_user.type},
+                                           expires_delta=timedelta(hours=1))
 
-    # Return the access token and user data in JSON format
-    return jsonify({'access_token': access_token, 'user': existing_user.serialize()}), 200
+        # Return the access token and user data in JSON format
+        return jsonify({'access_token': access_token, 'user': existing_user.serialize()}), 200
+
+    except ExpiredSignatureError:
+        # If the token is expired, update the user's logged_in status to False
+        existing_user.logged_in = False
+        db.session.commit()
+
+        response = make_response(jsonify({'message': 'Token expired. Please log in again.'}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 # Initialize JWT Manager
 jwt = JWTManager(app)
@@ -173,21 +217,39 @@ def logout():
         response = make_response(jsonify({'message': 'Token has already been revoked'}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    
+    # Check if the token has expired
+    token_expired = False
+    try:
+        get_jwt()
+    except ExpiredSignatureError:
+        token_expired = True
 
-    # Delete the token from the database
-    revoked_token = RevokedToken(jti=jti)
-    db.session.add(revoked_token)
-    db.session.commit()
+    # If the token has expired, delete it from the database and log the user out
+    if token_expired:
+        revoked_token = RevokedToken(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
 
-    # Check if the token was successfully deleted from the database
-    if RevokedToken.is_jti_blacklisted(jti):
-        response = make_response(jsonify({'message': 'Logged out successfully'}), 200)
+        response = make_response(jsonify({'message': 'Token has expired. Please login again.'}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    
+    # If the token is valid, delete it from the database and log the user out
     else:
-        response = make_response(jsonify({'message': 'Failed to logout. Please try again later.'}), 500)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        revoked_token = RevokedToken(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
+
+        # Check if the token was successfully deleted from the database
+        if RevokedToken.is_jti_blacklisted(jti):
+            response = make_response(jsonify({'message': 'Logged out successfully'}), 200)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        else:
+            response = make_response(jsonify({'message': 'Failed to logout. Please try again later.'}), 500)
+            response.headers['Content-Type'] = 'application/json'
+            return response
 
 # THIS END POINT DELETES A USER AND ALL THEIR FAVORITES
 @app.route('/users/<int:user_id>', methods=['DELETE'])

@@ -8,6 +8,7 @@ import Login from './components/login';
 import SingleCity from './components/single-city';
 import NotFound from './notfound';
 import About from './components/about';
+import Profile from './components/profile';
 
 const Layout = () => {
   const basename = process.env.BASENAME || '';
@@ -18,6 +19,7 @@ const Layout = () => {
       <Routes>
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/" element={<Search />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
