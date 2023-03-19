@@ -7,6 +7,7 @@ import Signup from './components/signup';
 import Login from './components/login';
 import SingleCity from './components/single-city';
 import NotFound from './notfound';
+import About from './components/about';
 
 const Layout = () => {
   const basename = process.env.BASENAME || '';
@@ -16,6 +17,7 @@ const Layout = () => {
       <Navbar />
       <Routes>
         <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
         <Route path="/" element={<Search />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
