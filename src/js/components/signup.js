@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { setToken, setUsername, setPassword, setLoggedIn, setMessage, setEmail } from '../store/userSlice';
+import { setToken, setUsername, setPassword, setLoggedIn, setMessage, setEmail, setId } from '../store/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,6 +20,8 @@ function Signup() {
   const password = useSelector(state => state.user.password);
   const loggedIn = useSelector(state => state.user.loggedIn);
   const email = useSelector(state => state.user.email);
+  const id = useSelector(state => state.user.id);
+
   const navigate = useNavigate();
 
   const handleUsernameChange = (event) => {
@@ -49,6 +51,8 @@ function Signup() {
         console.log("My token: ", response.data.access_token)
         dispatch(setLoggedIn(true));
         navigate('/profile');
+        dispatch(setId(response.data.user.id));
+        console.log ("id from Redux: ", id);
         // redirect to the home page or any other authenticated page
       }
       // handle successful response

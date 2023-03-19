@@ -10,6 +10,7 @@ export const userSlice = createSlice({
         email: '',
         message: null,
         loggedIn: false,
+        id: null,
     },
     reducers: {
       setToken: (state, action) => {
@@ -29,10 +30,13 @@ export const userSlice = createSlice({
       },
       setLoggedIn: (state, action) => {
         state.loggedIn = action.payload;
+      },
+      setId: (state, action) => {
+        state.id = action.payload;
       }
     },
   });
   
-  export const { setToken, setMessage, setUsername, setPassword, setLoggedIn, setEmail } = userSlice.actions;
+  export const { setToken, setMessage, setUsername, setPassword, setLoggedIn, setEmail, setId } = userSlice.actions;
   
   export default userSlice.reducer;

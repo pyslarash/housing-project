@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import { useDispatch, useSelector } from "react-redux";
-import userSlice, { setToken, setMessage, setUsername, setPassword, setLoggedIn } from "../store/userSlice";
+import userSlice, { setToken, setMessage, setUsername, setPassword, setLoggedIn, setId } from "../store/userSlice";
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_BD_URL;
@@ -19,6 +19,8 @@ const Login = () => {
   const username = useSelector(state => state.user.username);
   const password = useSelector(state => state.user.password);
   const loggedIn = useSelector(state => state.user.loggedIn);
+  const id = useSelector(state => state.user.id);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -31,9 +33,11 @@ const Login = () => {
       });
       if (response.status === 200) {
         dispatch(setToken(response.data.access_token));
-        console.log("My token: ", response.data.access_token)
+        console.log("My token: ", response.data.access_token);        
         dispatch(setLoggedIn(true));
         navigate('/profile');
+        dispatch(setId(response.data.user.id));
+        console.log ("id from Redux: ", id);
         // redirect to the home page or any other authenticated page
       }
     } catch (error) {
