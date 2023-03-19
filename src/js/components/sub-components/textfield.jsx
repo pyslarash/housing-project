@@ -74,7 +74,7 @@ const TextField = ({ name, columnName, questionMarkText }) => {
           <Typography id="input-slider" gutterBottom>
             {name}
             <Tooltip title={questionMarkText}>
-              <QuestionMark title={columnName} />
+              <QuestionMark />
             </Tooltip>
           </Typography>
         </Grid>

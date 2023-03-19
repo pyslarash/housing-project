@@ -8,10 +8,13 @@ from jwt_config import configure_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Favorites, CombinedCityData, RevokedToken
 from datetime import timedelta
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
+from flask import redirect
 
 app = Flask(__name__)
-CORS(app) # This enables CORS for all routes
+CORS(app, supports_credentials=True)
+
+app.config['CORS_HEADERS'] = 'Content-Type'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://pyslarash:!FancyPass123$@localhost/housing_project'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -44,6 +47,7 @@ except Exception as e:
 
 # Define the endpoint for testing the connection
 @app.route('/', methods=['GET'])
+@cross_origin()
 def hello_world():
     if session:
         return 'Hello, World!'
@@ -51,8 +55,18 @@ def hello_world():
         return "Unable to connect to database", 500
 
 # THIS ENDPOINT CREATES A USER
-@app.route('/create_user', methods=['POST'])
+@app.route('/create_user', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def create_user():
+    if request.method == 'OPTIONS':
+        # Handle pre-flight request
+        response = make_response()
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
+    # Handle POST request as usual
     request_body_user = request.get_json()
 
     # Check if username or email already exist
@@ -63,6 +77,9 @@ def create_user():
     if existing_user or existing_email:
         response = make_response(jsonify({'message': 'Username or email already exists'}), 400)
         response.headers['Content-Type'] = 'application/json'
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
     # If username and email do not exist, create new user
@@ -78,8 +95,10 @@ def create_user():
     # Return the access token and user data in JSON format
     return jsonify({'access_token': access_token, 'user': user_add.serialize()}), 200
 
+
 # THIS ENDPOINT ALLOWS FOR A USER TO LOGIN
 @app.route('/login', methods=['POST'])
+@cross_origin()
 def login():
     request_body_user = request.get_json()
 
@@ -88,21 +107,27 @@ def login():
 
     # If username does not exist, return an error
     if not existing_user:
+        print("Error: Invalid username.")
         response = make_response(jsonify({'message': 'Invalid username or password'}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
 
     # Check if the user is already logged in
     if existing_user.logged_in:
+        print("Error: User already logged in.")
         response = make_response(jsonify({'message': 'User has been logged in already'}), 401)
         response.headers['Content-Type'] = 'application/json'
+        response.headers['WWW-Authenticate'] = 'Bearer error="already_logged_in", error_description="User has been logged in already"'
         return response
 
-    # Check if the password is correct
+# Check if the password is correct
     if not check_password_hash(existing_user.password_hash, request_body_user['password']):
+        print("Error: Invalid password.")
         response = make_response(jsonify({'message': 'Invalid username or password'}), 401)
         response.headers['Content-Type'] = 'application/json'
+        response.headers['WWW-Authenticate'] = 'Bearer error="invalid_credentials", error_description="Invalid username or password"'
         return response
+
 
     # Update user's logged_in status
     existing_user.logged_in = True

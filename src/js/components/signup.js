@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+
 
 function Signup() {
   const [username, setUsername] = React.useState('');
@@ -21,13 +23,30 @@ function Signup() {
   const handlePasswordChange = (event) => {
     setPassword(event.target.value);
   };
-
-  const handleSubmit = (event) => {
+  
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Handle the signup logic here, such as sending a signup request to the backend API
-    console.log('Signup clicked');
+  
+    try {
+      await axios.post('http://localhost:5000/create_user', {
+        username,
+        email,
+        password,
+        type: 'user',
+      });
+  
+      console.log('User created successfully');
+      window.location.href = '/login';
+    } catch (error) {
+      if (error.response.status === 400 && error.response.data.message === 'Username or email already exists') {
+        alert('Username or email already exists');
+        console.log('Username or email already exists');
+      } else {
+        console.log(error.response.data.message);
+      }
+    }
   };
-
+  
   return (
     <Box
       sx={{
