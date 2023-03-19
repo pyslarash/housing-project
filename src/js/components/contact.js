@@ -1,43 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import ReCAPTCHA from 'react-google-recaptcha';
+import axios from 'axios';
 
 const Contact = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
-    const [captchaResponse, setCaptchaResponse] = useState('');
+    const [token, setToken] = useState('');
+    const recaptchaRef = useRef(null);
 
-    const RECAPTCHA_SITE_KEY = "6LeA0hIlAAAAABWokI6PvCUWI2zpDQz8ULMrAugq";
-    const RECAPTCHA_SECRET_KEY = "6LeA0hIlAAAAAMJC1a6UpUgjmZQi2UbK_585FTrc";
+    const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
+    const RECAPTCHA_SECRET_KEY = process.env.REACT_APP_RECAPTCHA_SECRET_KEY;
 
-    const handleCaptchaChange = (value) => {
-      setCaptchaResponse(value);
+    const handleRecaptchaChange = (token) => {
+      setToken(token);
+      console.log('reCAPTCHA token:', token);
     };
   
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      const response = await fetch('/api/submit-form', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-          captchaResponse
-        })
-      });
-      const data = await response.json();
-      console.log(data);
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+    
+      const response = await verifyRecaptcha(token, RECAPTCHA_SECRET_KEY);
+    
+      console.log('reCAPTCHA verification response:', response);
+    
       setName('');
       setEmail('');
       setMessage('');
-      setCaptchaResponse('');
+      setToken('');
+      recaptchaRef.current.reset();
+    };
+
+    const verifyRecaptcha = async (token) => {
+      const url = 'https://www.google.com/recaptcha/api/siteverify';
+      const secret = RECAPTCHA_SECRET_KEY;
+      const response = await axios.post(url, null, {
+        params: {
+          secret: secret,
+          response: token
+        }
+      });
+      return response.data;
     };
 
     return (
@@ -73,11 +80,8 @@ const Contact = () => {
                     fullWidth
                     margin="normal"
                 />
-                <ReCAPTCHA
-                    sitekey="YOUR_RECAPTCHA_SITE_KEY"
-                    onChange={handleCaptchaChange}
-                />
-                <Button variant="contained" type="submit">
+                <ReCAPTCHA sitekey={RECAPTCHA_SITE_KEY} onChange={handleRecaptchaChange} />
+                <Button variant="contained" type="submit" sx={{ marginTop: '5px'}}>
                     Send
                 </Button>
             </Box>

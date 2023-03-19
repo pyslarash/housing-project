@@ -21,7 +21,7 @@ engine = create_engine(f'{db_uri}/{db_name}', echo=True)
 if not database_exists(engine.url):
     create_database(engine.url)
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, render_template, request
 from sqlalchemy import text, func, select
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
@@ -33,6 +33,9 @@ from models import db, User, Favorites, CombinedCityData, RevokedToken
 from datetime import timedelta
 from flask_cors import CORS
 from flask_migrate import Migrate
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 # db = SQLAlchemy(app)
@@ -812,6 +815,53 @@ def get_column_values():
     # Return the values as a JSON response
     return jsonify(values=values)
 
+# THIS FUNCTION IS SENDING AN EMAIL
+
+# Define email parameters
+to_email = 'to@example.com'
+from_email = 'from@example.com'
+password = 'your_email_password'
+subject = 'Test Email'
+message = 'This is a test email.'
+
+def send_email(name, email, message):
+    # set up the SMTP server
+    smtp_server = os.environ.get('ENV_SMTP_SERVER')
+    port = os.environ.get('ENV_SMTP_PORT')
+    sender_email = os.environ.get('ENV_SENDER_EMAIL') # Replace this with your own email address
+    sender_password = os.environ.get('ENV_SENDER_PASSWORD') # Replace this with your own password
+    receiver_email = os.environ.get('ENV_RECEIVER_EMAIL') # Replace this with the recipient's email address
     
+    # create the email message
+    msg = MIMEMultipart()
+    msg['From'] = name
+    msg['To'] = receiver_email
+    msg['Subject'] = os.environ.get('ENV_SUBJECT')
+    
+    # add the message to the email body
+    body = f"Name: {name}\nEmail: {email}\n\nMessage:\n{message}"
+    msg.attach(MIMEText(body, 'plain'))
+    
+    # create the SMTP connection and send the email
+    server = smtplib.SMTP(smtp_server, port)
+    server.starttls()
+    server.login(sender_email, sender_password)
+    text = msg.as_string()
+    server.sendmail(sender_email, receiver_email, text)
+    server.quit()
+    
+    print('Email sent')
+
+# THIS IS AN API ENDPOINT TO SEND AN EMAIL
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        message = request.form['message']
+        send_email(name, email, message)
+        return 'Message sent!'
+
+
 if __name__ == '__main__':
     app.run(debug=True) #running in debug to track changes
