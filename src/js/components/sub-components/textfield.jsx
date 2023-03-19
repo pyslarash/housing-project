@@ -20,15 +20,16 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const TextField = ({ name, columnName, questionMarkText }) => {
-  const [isActive, setIsActive] = useState(false);
-  const [isNAChecked, setIsNAChecked] = useState(false);
-  const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
-  const [value, setValue] = useState(minValue || 0);  
+const TextField = ({ name, columnName, questionMarkText, onMinChange, onNAChange, isItActive,
+                                                          min, NAChange, activeChange }) => {
+  const [isActive, setIsActive] = useState(activeChange);
+  const [isNAChecked, setIsNAChecked] = useState(NAChange);
+  const [minValue, setMinValue] = useState(min); // Initialize to null instead of 0
+  const [value, setValue] = useState(minValue || 0);
   const [isNADisabled, setIsNADisabled] = useState(false);
-  const URL = "http://localhost:5000"; // Defining the database URL
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
- 
+
 
   useEffect(() => {
     if (minValue !== null) { // Render only when the API call has completed
@@ -39,31 +40,38 @@ const TextField = ({ name, columnName, questionMarkText }) => {
   const handleInputChange = (event) => {
     const newValue = event.target.value === '' ? '' : Number(event.target.value);
     setValue(newValue);
+    onMinChange(newValue);
   };
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
     if (!isActive) { // make API request only if the toggle is being turned on
-    axios
-      .get(`${URL}/column_review?column_name=${columnName}`)
-      .then(response => {
-        setMinValue(response.data.min_value);
-        setIsNAChecked(response.data.null_values_exist);
-        setIsNADisabled(!response.data.null_values_exist);
-        console.log(response.data)
-      })
-      .catch(error => {
-        console.error(error);
-      });
+      axios
+        .get(`${URL}/column_review?column_name=${columnName}`)
+        .then(response => {
+          setMinValue(response.data.min_value);
+          onMinChange(response.data.min_value);
+          setIsNAChecked(response.data.null_values_exist);
+          onNAChange(response.data.null_values_exist);
+          setIsNADisabled(!response.data.null_values_exist);
+          console.log(response.data)
+        })
+        .catch(error => {
+          console.error(error);
+        });
+      isItActive(!isActive);
+    }
+    else {
+      onMinChange(null);
+      onNAChange(null);
+      isItActive(false);
     }
   };
 
   const handleNACheck = () => {
     if (isActive && !isNADisabled) {
       setIsNAChecked(!isNAChecked);
-      if (!isNAChecked) {
-        setValue(minValue || 0);
-      }
+      onNAChange(!isNAChecked);
     }
   };
 
@@ -74,7 +82,7 @@ const TextField = ({ name, columnName, questionMarkText }) => {
           <Typography id="input-slider" gutterBottom>
             {name}
             <Tooltip title={questionMarkText}>
-              <QuestionMark title={columnName} />
+              <QuestionMark />
             </Tooltip>
           </Typography>
         </Grid>

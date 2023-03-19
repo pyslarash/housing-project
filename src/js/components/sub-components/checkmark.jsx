@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
@@ -14,11 +14,13 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-const Checkmark = ({ name, columnName, questionMarkText }) => {
-  const [isChecked, setIsChecked] = useState(false);
+const Checkmark = ({ name, questionMarkText, onCheckingChange, infoUpdate }) => {
+  const [isChecked, setIsChecked] = useState(infoUpdate);
 
   const handleChange = (event) => {
-    setIsChecked(event.target.checked);
+    const newCheckedValue = event.target.checked;
+    setIsChecked(newCheckedValue);
+    onCheckingChange(newCheckedValue);
   };
 
   return (

@@ -14,7 +14,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from "../../img/logo.svg";
+import logo from "../../img/logo-100.png";
 
 const pages = ['Search', 'Contact'];
 const settings = ['Profile', 'Saves', 'Logout'];
@@ -51,10 +51,10 @@ function Navbar() {
   };
 
   return (
-    <AppBar position="static">
+    <AppBar className="header" position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <img src={logo} alt="Logo" width="30" height="30" />
+          <img src={logo} alt="Logo" width="50" height="50" />
           <Typography
             variant="h6"
             noWrap
@@ -63,15 +63,15 @@ function Navbar() {
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
               fontWeight: 700,
-              letterSpacing: '.3rem',
               marginLeft: '20px',
               color: 'inherit',
               textDecoration: 'none',
+              fontFamily: 'k2D, sans-serif',
+              fontSize: '24px',
             }}
           >
-            Peoplemvr
+            LocationPro
           </Typography>
 
           <Box
@@ -121,14 +121,14 @@ function Navbar() {
               mr: 2,
               display: { xs: 'flex', md: 'none' },
               flexGrow: 1,
-              fontFamily: 'monospace',
               fontWeight: 700,
-              letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              fontFamily: 'k2D, sans-serif',
+              fontSize: '24px',
             }}
           >
-            Peoplemvr
+            LocationPro
           </Typography>
           <Box
             sx={{

@@ -4,21 +4,14 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import {
-  Input,
   Switch,
   Tooltip,
   Select,
-  MenuItem,
   FormControl,
-  InputLabel,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
 import axios from 'axios';
-
-const StyledInput = styled(Input)(({ theme }) => ({
-  width: '50px',
-}));
 
 const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   marginLeft: theme.spacing(1),
@@ -31,29 +24,41 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
 export default function SelectMany({
   name,
   columnName,
-  questionMarkText
-  }) {
-  const [value, setValue] = useState([]);
-  const [isActive, setIsActive] = useState(false);
-  const [listArray, setListArray] = useState(["It doesn't matter"]);
-  const URL = "http://localhost:5000"; // Defining the database URL
+  questionMarkText,
+  onSelectingChange,
+  isItActive,
+  selections,
+  activeChange,
+  storeListArray,
+  getListArray,
+}) {
+  const [value, setValue] = useState(selections);
+  const [isActive, setIsActive] = useState(activeChange);
+  const [listArray, setListArray] = useState(getListArray);
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
   useEffect(() => {
-    if (listArray) {
-      setValue([listArray[0]]);
+    if (listArray && selections !== undefined) {
+      setValue(selections);
     }
-  }, [listArray]);
+  }, [listArray, selections]);
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
-    if (!isActive) { // make API request only if the toggle is being turned on
-        axios.get(`${URL}/column_values?column_name=${columnName}`)
-          .then((response) => {
-            const sortedValues = response.data.values.sort();
-            setListArray(["It doesn't matter", ...sortedValues])
-          })
-          .catch((error) => console.log(error));
+    if (!isActive) {
+      axios
+        .get(`${URL}/column_values?column_name=${columnName}`)
+        .then((response) => {
+          const sortedValues = response.data.values.sort();
+          setListArray(sortedValues);
+          storeListArray(sortedValues);
+        })
+        .catch((error) => console.log(error));
+    } else {
+      setListName([]);
+      onSelectingChange(null);
     }
+    isItActive(!isActive);
   };
 
   const handleSelectChange = (event) => {
@@ -61,6 +66,7 @@ export default function SelectMany({
   };
 
   const [listName, setListName] = useState([]);
+
   const handleChangeMultiple = (event) => {
     const { options } = event.target;
     const value = [];
@@ -70,6 +76,7 @@ export default function SelectMany({
       }
     }
     setListName(value);
+    onSelectingChange(value);
   };
 
   return (
@@ -96,7 +103,7 @@ export default function SelectMany({
                 id="select-many-native"
                 multiple
                 native
-                value={listName}
+                value={value === undefined ? '' : value}
                 onChange={handleChangeMultiple}
                 inputProps={{ id: 'select-many-native' }}
               >

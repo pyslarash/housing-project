@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import axios from 'axios';
 
-const API_URL = "http://127.0.0.1:5000";
+const API_URL = process.env.REACT_APP_BD_URL;
 
 const Login = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
@@ -22,25 +22,25 @@ const Login = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-  
+
     // Send login request to backend API using axios
     axios.post(`${API_URL}/login`, {
       username: usernameOrEmail,
       password: password
     })
-    .then((response) => {
-      if (response.status === 200) {
-        // If the login request is successful, set the access token in the local storage and redirect to the home page
-        localStorage.setItem('access_token', response.data.access_token);
-        window.location.href = '/';
-      } else {
-        // If the login request fails, display an error message
-        console.log(response.data.message);
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+      .then((response) => {
+        if (response.status === 200) {
+          // If the login request is successful, set the access token in the local storage and redirect to the home page
+          localStorage.setItem('access_token', response.data.access_token);
+          window.location.href = '/';
+        } else {
+          // If the login request fails, display an error message
+          console.log(response.data.message);
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (
