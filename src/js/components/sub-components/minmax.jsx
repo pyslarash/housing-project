@@ -21,16 +21,18 @@ const QuestionMark = styled(HelpIcon)(({ theme }) => ({
   cursor: 'help',
 }));
 
-export default function MinMax({ name, columnName, questionMarkText }) {
-  const [minValue, setMinValue] = useState(null); // Initialize to null instead of 0
-  const [maxValue, setMaxValue] = useState(null); // Initialize to null instead of 100
+export default function MinMax({ name, questionMarkText, columnName, onMinChange, onMaxChange, onNAChange, isItActive,
+                                                                      minChange, maxChange, NAChange, activeChange }) {
+  const [minValue, setMinValue] = useState(minChange); // Initialize to null instead of 0
+  const [maxValue, setMaxValue] = useState(maxChange); // Initialize to null instead of 100
   const [value, setValue] = useState([0, 100]); // Initialize with default values
-  const [isActive, setIsActive] = useState(false);
-  const [isNAChecked, setIsNAChecked] = useState(false);
+  const [isActive, setIsActive] = useState(activeChange);
+  const [isNAChecked, setIsNAChecked] = useState(NAChange);
   const [isNADisabled, setIsNADisabled] = useState(false);
-  const URL = "http://localhost:5000"; // Defining the database URL
+  const [apiCallMade, setApiCallMade] = useState(false); // Checking whether we already made an API call using toggle
+  const URL = process.env.REACT_APP_BD_URL; // Defining the database URL
 
-  
+
 
   useEffect(() => {
     if (minValue !== null && maxValue !== null) { // Render only when the API call has completed
@@ -43,34 +45,59 @@ export default function MinMax({ name, columnName, questionMarkText }) {
     const updatedValue = [...value];
     updatedValue[index] = newValue;
     setValue(updatedValue);
+
+    if (index === 0) {
+      setMinValue(newValue);
+      onMinChange(newValue);
+    } else if (index === 1) {
+      setMaxValue(newValue);
+      onMaxChange(newValue);
+    }
   };
 
   const handleActiveToggle = () => {
     setIsActive(!isActive);
-    if (!isActive) { // make API request only if the toggle is being turned on
-    axios
-      .get(`${URL}/column_review?column_name=${columnName}`)
-      .then(response => {
-        setMinValue(response.data.min_value);
-        setMaxValue(response.data.max_value);
-        setIsNAChecked(response.data.null_values_exist);
-        setIsNADisabled(!response.data.null_values_exist);
-        console.log(response.data)
-      })
-      .catch(error => {
-        console.error(error);
-      });
+    if (!isActive) {
+      if (!apiCallMade) {
+        axios
+          .get(`${URL}/column_review?column_name=${columnName}`)
+          .then(response => {
+            setMinValue(response.data.min_value); // Setting the most min value
+            onMinChange(response.data.min_value); // Passing that value to SearchBox
+            setMaxValue(response.data.max_value); // Settign the most max value
+            onMaxChange(response.data.max_value); // Passing it to the SearchBox
+            setIsNAChecked(response.data.null_values_exist); // Do we need to check NA?
+            onNAChange(response.data.null_values_exist); // Sending it to the SearchBox
+            setIsNADisabled(!response.data.null_values_exist); // Making the checkbox disabled if needed
+            setApiCallMade(true); // Marking as API call made
+            // console.log(response.data)
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      } else {
+        onMinChange(minValue);
+        onMaxChange(maxValue);
+        onNAChange(isNAChecked);
+      }
+      isItActive(!isActive);
+    } else {
+      onMinChange(null);
+      onMaxChange(null);
+      onNAChange(null);
+      isItActive(false);
     }
   };
+
 
   const handleNACheck = () => {
     if (isActive && !isNADisabled) {
       setIsNAChecked(!isNAChecked);
-      if (!isNAChecked) {
-        setValue([minValue || 0, maxValue || 100]);
-      }
+      onNAChange(!isNAChecked);
     }
   };
+
+
 
   return (
     <Box sx={{ width: 300 }}>
@@ -106,7 +133,6 @@ export default function MinMax({ name, columnName, questionMarkText }) {
               inputProps={{
                 step: 10,
                 min: minValue,
-                max: maxValue,
                 type: 'number',
                 'aria-labelledby': 'input-slider',
               }}
@@ -123,7 +149,6 @@ export default function MinMax({ name, columnName, questionMarkText }) {
               onChange={(event) => handleInputChange(event, 1)}
               inputProps={{
                 step: 10,
-                min: minValue,
                 max: maxValue,
                 type: 'number',
                 'aria-labelledby': 'input-slider',

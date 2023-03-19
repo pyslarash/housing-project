@@ -14,7 +14,15 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import logo from "../../img/logo.svg";
+import logo from "../../img/logo-100.png";
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { setLoggedIn, setToken, setUsername, setPassword } from '../store/userSlice';
+import axios from "axios";
+//import { setLoggedIn, setToken, setEmail, setPassword, setUsername } from "../../store/userSlice";
+
+
+const API_URL = process.env.REACT_APP_BD_URL;
 
 const pages = ['Search', 'Contact'];
 const settings = ['Profile', 'Saves', 'Logout'];
@@ -22,7 +30,14 @@ const settings = ['Profile', 'Saves', 'Logout'];
 function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState(null);
-  const [loggedIn, setLoggedIn] = useState(false); // Add state for whether the user is logged in or not
+
+  const token = useSelector(state => state.user.token);
+  const username = useSelector(state => state.user.username);
+  const password = useSelector(state => state.user.password);
+  const loggedIn = useSelector(state => state.user.loggedIn);
+  const dispatch = useDispatch();
+
+  const navigate = useNavigate();
 
   const handleOpenDrawer = () => {
     setDrawerOpen(true);
@@ -45,16 +60,33 @@ function Navbar() {
     console.log('Login clicked');
   };
 
-  const handleLogout = () => {
-    // Handle the logout logic here, such as clearing the user session
-    setLoggedIn(false);
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/logout`, null, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        },
+        "data": {
+          "username": username,
+          "password": password
+        }
+      }, console.log(token));
+
+      // clear the user's access token from the state
+      dispatch(setToken(null));
+      dispatch(setLoggedIn(false));
+      handleCloseUserMenu();
+      navigate('/')
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
-    <AppBar position="static">
+    <AppBar className="header" position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <img src={logo} alt="Logo" width="30" height="30" />
+          <img src={logo} alt="Logo" width="50" height="50" />
           <Typography
             variant="h6"
             noWrap
@@ -63,15 +95,15 @@ function Navbar() {
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
               fontWeight: 700,
-              letterSpacing: '.3rem',
               marginLeft: '20px',
               color: 'inherit',
               textDecoration: 'none',
+              fontFamily: 'k2D, sans-serif',
+              fontSize: '24px',
             }}
           >
-            Peoplemvr
+            LocationPro
           </Typography>
 
           <Box
@@ -121,14 +153,14 @@ function Navbar() {
               mr: 2,
               display: { xs: 'flex', md: 'none' },
               flexGrow: 1,
-              fontFamily: 'monospace',
               fontWeight: 700,
-              letterSpacing: '.3rem',
               color: 'inherit',
               textDecoration: 'none',
+              fontFamily: 'k2D, sans-serif',
+              fontSize: '24px',
             }}
           >
-            Peoplemvr
+            LocationPro
           </Typography>
           <Box
             sx={{
@@ -164,33 +196,41 @@ function Navbar() {
                 Login
               </MenuItem>
             )}
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleLogout}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </Box>
-        </Toolbar>
-      </Container>
-    </AppBar>
+            {loggedIn && (
+              <Menu
+                sx={{ mt: '45px' }}
+                id="menu-appbar"
+                anchorEl={anchorElUser}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorElUser)}
+                onClose={handleCloseUserMenu}
+              >
+                {settings.map((setting) => (
+                  <MenuItem
+                    key={setting}
+                    onClick={
+                      setting === 'Logout' ? handleLogout :
+                        setting === 'Profile' ? () => { navigate('/profile') } :
+                          null}>
+                    <Typography textAlign="center">{setting}</Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            )}
+        </Box>
+      </Toolbar>
+    </Container>
+    </AppBar >
   );
-}
+
+};
 
 export default Navbar;

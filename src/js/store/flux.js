@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const API_URL = process.env.REACT_APP_BD_URL;
+
 const getState = ({ getStore, getActions, setStore }) => {
   return {
     store: {
@@ -51,7 +53,7 @@ const getState = ({ getStore, getActions, setStore }) => {
         };
 
         try {
-          const resp = await axios.post("http://127.0.0.1:5000/login", data, config);
+          const resp = await axios.post(`${API_URL}/login`, data, config);
           if (resp.status !== 200) {
             alert("There has been some error!");
             return false;
@@ -70,7 +72,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       getMessage: async () => {
         try {
           // fetching data from the backend
-          const resp = await axios.get(process.env.BACKEND_URL + "/login");
+          const resp = await axios.get(`${API_URL}/login`);
           setStore({ message: resp.data.message });
           // don't forget to return something, that is how the async resolves
           return resp.data;

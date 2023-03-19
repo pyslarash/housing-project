@@ -1,0 +1,17 @@
+/* Apply styles to all links except those inside the Navbar component */
+a {
+    color: #1b90ce;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Apply styles to all links on hover except those inside the Navbar component */
+a:hover {
+    color: #0d4e85;
+    text-decoration: none;
+}
+
+/* Apply styles to links inside the Navbar component */
+.header a:hover {
+    color: #ffffff;
+}

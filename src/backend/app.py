@@ -1,5 +1,30 @@
+
+import os
+from dotenv import load_dotenv
+from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy import create_engine
+from datetime import datetime
+from jwt.exceptions import ExpiredSignatureError
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Database information
+db_username = os.environ.get('ENV_DB_USER')
+db_password = os.environ.get('ENV_DB_PASSWORD')
+db_host = os.environ.get('ENV_DB_HOST')
+db_name = os.environ.get('ENV_DB_DATABASE')
+
+db_uri = f"mysql://{db_username}:{db_password}@{db_host}"
+
+# Create the engine and session outside the request handler
+engine = create_engine(f'{db_uri}/{db_name}', echo=True)
+
+if not database_exists(engine.url):
+    create_database(engine.url)
+
 from flask import Flask, request, jsonify, make_response
-from sqlalchemy import create_engine, text, func, select
+from sqlalchemy import text, func, select
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
@@ -8,24 +33,26 @@ from jwt_config import configure_jwt
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Favorites, CombinedCityData, RevokedToken
 from datetime import timedelta
-from flask_cors import CORS, cross_origin
-from flask import redirect
+from flask_cors import CORS
+from flask_cors import cross_origin
+from flask_migrate import Migrate
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
-
-app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://pyslarash:!FancyPass123$@localhost/housing_project'
+# db = SQLAlchemy(app)
+CORS(app) # This enables CORS for all routes
+app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql://{db_username}:{db_password}@{db_host}/{db_name}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
-
 configure_jwt(app)
 
-# Create the engine and session outside the request handler
-engine = create_engine('mysql://pyslarash:!FancyPass123$@localhost/housing_project')
 Session = sessionmaker(bind=engine)
 session = None
+
+with app.app_context():
+    db.create_all()
+
+migrate = Migrate(app, db)
 
 # Try to create a test session and test the connection
 try:
@@ -88,12 +115,22 @@ def create_user():
     session.add(user_add)
     session.commit()
 
-    # Create access token for the newly created user
-    access_token = create_access_token(identity={'id': user_add.id, 'type': user_add.type},
-                                        expires_delta=timedelta(hours=1))
+    try:
+        # Create access token for the newly created user with a 1 hour expiration time
+        access_token = create_access_token(identity={'id': user_add.id, 'type': user_add.type},
+                                           expires_delta=timedelta(hours=1))
 
-    # Return the access token and user data in JSON format
-    return jsonify({'access_token': access_token, 'user': user_add.serialize()}), 200
+        # Return the access token and user data in JSON format
+        return jsonify({'access_token': access_token, 'user': user_add.serialize()}), 200
+
+    except ExpiredSignatureError:
+        # If the token is expired, update the user's logged_in status to False
+        user_add.logged_in = False
+        db.session.commit()
+
+        response = make_response(jsonify({'message': 'Token expired. Please log in again.'}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 
 # THIS ENDPOINT ALLOWS FOR A USER TO LOGIN
@@ -133,13 +170,22 @@ def login():
     existing_user.logged_in = True
     db.session.commit()
 
-    # Create access token for the logged in user with a 1 hour expiration time
-    access_token = create_access_token(identity={'id': existing_user.id, 'type': existing_user.type},
-                                       expires_delta=timedelta(hours=1))
-    
+    try:
+        # Create access token for the logged in user with a 1 hour expiration time
+        access_token = create_access_token(identity={'id': existing_user.id, 'type': existing_user.type},
+                                           expires_delta=timedelta(hours=1))
 
-    # Return the access token and user data in JSON format
-    return jsonify({'access_token': access_token, 'user': existing_user.serialize()}), 200
+        # Return the access token and user data in JSON format
+        return jsonify({'access_token': access_token, 'user': existing_user.serialize()}), 200
+
+    except ExpiredSignatureError:
+        # If the token is expired, update the user's logged_in status to False
+        existing_user.logged_in = False
+        db.session.commit()
+
+        response = make_response(jsonify({'message': 'Token expired. Please log in again.'}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 # Initialize JWT Manager
 jwt = JWTManager(app)
@@ -167,21 +213,39 @@ def logout():
         response = make_response(jsonify({'message': 'Token has already been revoked'}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    
+    # Check if the token has expired
+    token_expired = False
+    try:
+        get_jwt()
+    except ExpiredSignatureError:
+        token_expired = True
 
-    # Delete the token from the database
-    revoked_token = RevokedToken(jti=jti)
-    db.session.add(revoked_token)
-    db.session.commit()
+    # If the token has expired, delete it from the database and log the user out
+    if token_expired:
+        revoked_token = RevokedToken(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
 
-    # Check if the token was successfully deleted from the database
-    if RevokedToken.is_jti_blacklisted(jti):
-        response = make_response(jsonify({'message': 'Logged out successfully'}), 200)
+        response = make_response(jsonify({'message': 'Token has expired. Please login again.'}), 401)
         response.headers['Content-Type'] = 'application/json'
         return response
+    
+    # If the token is valid, delete it from the database and log the user out
     else:
-        response = make_response(jsonify({'message': 'Failed to logout. Please try again later.'}), 500)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        revoked_token = RevokedToken(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
+
+        # Check if the token was successfully deleted from the database
+        if RevokedToken.is_jti_blacklisted(jti):
+            response = make_response(jsonify({'message': 'Logged out successfully'}), 200)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+        else:
+            response = make_response(jsonify({'message': 'Failed to logout. Please try again later.'}), 500)
+            response.headers['Content-Type'] = 'application/json'
+            return response
 
 # THIS END POINT DELETES A USER AND ALL THEIR FAVORITES
 @app.route('/users/<int:user_id>', methods=['DELETE'])
@@ -469,6 +533,16 @@ def get_user_favorites(user_id):
         # Serialize the favorites data and return it as JSON
         serialized_favorites = [favorite.serialize() for favorite in favorites]
         return jsonify(serialized_favorites), 200
+    
+#THIS API END POINT GETS A CITY BY ID
+@app.route('/city_data/<int:id>')
+def get_city_data(id):
+    city_data = CombinedCityData.query.filter_by(id=id).first()
+
+    if not city_data:
+        return jsonify({'error': 'City data not found.'}), 404
+
+    return jsonify(city_data.serialize())
 
 #THIS IS THE FILTER FOR THE DATABASE
 @app.route('/filtered_city_data', methods=['GET'])
@@ -512,6 +586,9 @@ def get_filtered_city_data():
         metro_unemployment_min = request.args.get('metro_unemployment_min', type=int)
         metro_unemployment_max = request.args.get('metro_unemployment_max', type=int)
         metro_unemployment_null_is_ok = request.args.get('metro_unemployment_null_is_ok', type=str, default='false')
+        metro_aqi_min = request.args.get('metro_aqi_min', type=int)
+        metro_aqi_max = request.args.get('metro_aqi_max', type=int)
+        metro_aqi_null_is_ok = request.args.get('metro_aqi_null_is_ok', type=str, default='false')
         metro_avg_nwi_min = request.args.get('metro_avg_nwi_min', type=int)
         metro_avg_nwi_max = request.args.get('metro_avg_nwi_max', type=int)
         metro_avg_nwi_null_is_ok = request.args.get('metro_avg_nwi_null_is_ok', type=str, default='false')
@@ -607,27 +684,23 @@ def get_filtered_city_data():
         if city_num_of_brews:
             if city_num_of_brews_null_is_ok.lower() == 'true':
                 query = query.filter(
-                    (CombinedCityData.city_num_of_brews == city_num_of_brews) | (CombinedCityData.city_num_of_brews.is_(None))
+                    (CombinedCityData.city_num_of_brews >= city_num_of_brews) | (CombinedCityData.city_num_of_brews.is_(None))
                 )
             else:
                 query = query.filter(
-                    CombinedCityData.city_num_of_brews == city_num_of_brews, 
+                    CombinedCityData.city_num_of_brews >= city_num_of_brews, 
                     CombinedCityData.city_num_of_brews.isnot(None)
                 )
         if city_is_startup:
-            if city_is_startup.lower() == 'true':
-                query = query.filter(CombinedCityData.city_is_startup == 'YES')
-            else:
-                query = query.filter(CombinedCityData.city_is_startup == 'NO')
+            if city_is_startup.upper() == 'TRUE':
+                query = query.filter(CombinedCityData.city_is_startup == 'TRUE', CombinedCityData.city_is_startup.isnot(None))
         if city_is_foodie:
-            if city_is_foodie.lower() == 'true':
-                query = query.filter(CombinedCityData.city_is_foodie == 'YES')
-            else:
-                query = query.filter(CombinedCityData.city_is_foodie == 'NO')
+            if city_is_foodie.upper() == 'TRUE':
+                query = query.filter(CombinedCityData.city_is_foodie == 'TRUE', CombinedCityData.city_is_foodie.isnot(None))
         if metro_population_min:
             if metro_population_null_is_ok.lower() == 'true':
                 query = query.filter(
-                    (CombinedCityData.metro_population_price.between(metro_population_min, metro_population_max)) | (CombinedCityData.metro_population.is_(None))
+                    (CombinedCityData.metro_population.between(metro_population_min, metro_population_max)) | (CombinedCityData.metro_population.is_(None))
                 )
             else:
                 query = query.filter(
@@ -663,6 +736,16 @@ def get_filtered_city_data():
                 query = query.filter(
                     CombinedCityData.metro_unemployment.between(metro_unemployment_min, metro_unemployment_max),
                     CombinedCityData.metro_unemployment.isnot(None)
+                )
+        if metro_aqi_min:
+            if metro_aqi_null_is_ok.lower() == 'true':
+                query = query.filter(
+                    (CombinedCityData.metro_aqi.between(metro_aqi_min, metro_aqi_max)) | (CombinedCityData.metro_aqi.is_(None))
+                )
+            else:
+                query = query.filter(
+                    CombinedCityData.metro_aqi.between(metro_aqi_min, metro_aqi_max),
+                    CombinedCityData.metro_aqi.isnot(None)
                 )
         if metro_avg_nwi_min:
             if metro_avg_nwi_null_is_ok.lower() == 'true':

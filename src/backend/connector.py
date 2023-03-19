@@ -1,10 +1,15 @@
 # This file checks data in the table
+import os
+from dotenv import load_dotenv
 import mysql.connector
 
+# Load environment variables from .env file
+load_dotenv()
+
 # create a connection to the MySQL server
-cnx = mysql.connector.connect(user='pyslarash', password='!FancyPass123$',
-                              host='127.0.0.1',
-                              database='housing_project')
+cnx = mysql.connector.connect(user=os.environ.get('ENV_DB_USER'), password=os.environ.get('ENV_DB_PASSWORD'),
+                              host=os.environ.get('ENV_DB_HOST'),
+                              database=os.environ.get('ENV_DB_DATABASE'))
 
 # create a cursor object to execute SQL queries
 cursor = cnx.cursor()
