@@ -1,51 +1,44 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import ReCAPTCHA from 'react-google-recaptcha';
 import axios from 'axios';
 
 const Contact = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
-    const [token, setToken] = useState('');
-    const recaptchaRef = useRef(null);
+    const [status, setStatus] = useState(null);
 
-    const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
-    const RECAPTCHA_SECRET_KEY = process.env.REACT_APP_RECAPTCHA_SECRET_KEY;
+    const BACKEND_URL = process.env.REACT_APP_BD_URL;
 
-    const handleRecaptchaChange = (token) => {
-      setToken(token);
-      console.log('reCAPTCHA token:', token);
-    };
-  
     const handleSubmit = async (event) => {
-      event.preventDefault();
-    
-      const response = await verifyRecaptcha(token, RECAPTCHA_SECRET_KEY);
-    
-      console.log('reCAPTCHA verification response:', response);
-    
-      setName('');
-      setEmail('');
-      setMessage('');
-      setToken('');
-      recaptchaRef.current.reset();
+        event.preventDefault();
+
+        const emailResponse = await sendEmail(name, email, message);
+        console.log('Email sending response:', emailResponse);
+
+        if (emailResponse.status === 200) {
+            setStatus('Email sent successfully');
+        } else {
+            setStatus('Error sending email');
+        }
+
+        setName('');
+        setEmail('');
+        setMessage('');
     };
 
-    const verifyRecaptcha = async (token) => {
-      const url = 'https://www.google.com/recaptcha/api/siteverify';
-      const secret = RECAPTCHA_SECRET_KEY;
-      const response = await axios.post(url, null, {
-        params: {
-          secret: secret,
-          response: token
-        }
-      });
-      return response.data;
-    };
+    const sendEmail = async (name, email, message) => {
+        const response = await axios.post(`${BACKEND_URL}/contact`, {
+          name: name,
+          email: email,
+          message: message
+        });
+        console.log(response.data);
+        return response;
+      };
 
     return (
         <Box sx={{ mx: 'auto', maxWidth: 600 }}>
@@ -80,11 +73,15 @@ const Contact = () => {
                     fullWidth
                     margin="normal"
                 />
-                <ReCAPTCHA sitekey={RECAPTCHA_SITE_KEY} onChange={handleRecaptchaChange} />
                 <Button variant="contained" type="submit" sx={{ marginTop: '5px'}}>
                     Send
                 </Button>
             </Box>
+            {status && (
+                <Typography sx={{ marginTop: '10px' }}>
+                    {status}
+                </Typography>
+            )}
         </Box>
     );
 };
