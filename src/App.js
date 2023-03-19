@@ -3,7 +3,8 @@ import Layout from './js/layout';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Helmet } from 'react-helmet';
 import { Provider } from "react-redux";
-import store from "./js/store/store"
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from './js/store/store';
 import "./styles/links.css"
 
 // Can change theme colors here:
@@ -21,14 +22,16 @@ const theme = createTheme({
 function App() {
   return (
     // ThemeProvider applies the colors to the whole app
-    <ThemeProvider theme={theme}>
-      <Provider store={store}>
-        <Helmet>
-          <title>LocationPro</title>
-        </Helmet>
-        <Layout />
-      </Provider>
-    </ThemeProvider>
+    <Provider store={store}>
+      <PersistGate loading={<div>Loading...</div>} persistor={persistor}>
+        <ThemeProvider theme={theme}>
+          <Helmet>
+            <title>LocationPro</title>
+          </Helmet>
+          <Layout />
+        </ThemeProvider>
+      </PersistGate>
+    </Provider>
   );
 }
 

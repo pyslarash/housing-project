@@ -1,21 +1,30 @@
-import { configureStore, getDefaultMiddleware } from '@reduxjs/toolkit'
-import searchReducer from "./searchSlice"
+import { configureStore, getDefaultMiddleware, combineReducers } from '@reduxjs/toolkit';
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
+import searchReducer from './searchSlice';
 import searchBoxSliceReducer from './searchBoxSlice';
-import userSliceReducer from "./userSlice"
+import userSliceReducer from './userSlice';
 import thunk from 'redux-thunk';
+
+const persistConfig = {
+  key: 'root',
+  storage,
+  whitelist: ['user'] // only persist the 'user' slice of the store
+};
+
+const persistedReducer = persistReducer(persistConfig, combineReducers({
+  search: searchReducer,
+  searchBoxSlice: searchBoxSliceReducer,
+  user: userSliceReducer,
+}));
 
 const middleware = [...getDefaultMiddleware(), thunk];
 
-
 const store = configureStore({
-  reducer: {
-    search: searchReducer,
-    searchBoxSlice: searchBoxSliceReducer,
-    user: userSliceReducer,
-  },
+  reducer: persistedReducer,
   middleware,
 });
-// store.subscribe(() => {
-//   console.log("Updated store:", store.getState());
-// });
-export default store;
+
+const persistor = persistStore(store);
+
+export { store, persistor };
