@@ -3,42 +3,42 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import ReCAPTCHA from 'react-google-recaptcha';
+import axios from 'axios';
 
 const Contact = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
-    const [captchaResponse, setCaptchaResponse] = useState('');
+    const [status, setStatus] = useState(null);
 
-    const RECAPTCHA_SITE_KEY = "6LeA0hIlAAAAABWokI6PvCUWI2zpDQz8ULMrAugq";
-    const RECAPTCHA_SECRET_KEY = "6LeA0hIlAAAAAMJC1a6UpUgjmZQi2UbK_585FTrc";
+    const BACKEND_URL = process.env.REACT_APP_BD_URL;
 
-    const handleCaptchaChange = (value) => {
-      setCaptchaResponse(value);
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const emailResponse = await sendEmail(name, email, message);
+        console.log('Email sending response:', emailResponse);
+
+        if (emailResponse.status === 200) {
+            setStatus('Email sent successfully');
+        } else {
+            setStatus('Error sending email');
+        }
+
+        setName('');
+        setEmail('');
+        setMessage('');
     };
-  
-    const handleSubmit = async (e) => {
-      e.preventDefault();
-      const response = await fetch('/api/submit-form', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-          captchaResponse
-        })
-      });
-      const data = await response.json();
-      console.log(data);
-      setName('');
-      setEmail('');
-      setMessage('');
-      setCaptchaResponse('');
-    };
+
+    const sendEmail = async (name, email, message) => {
+        const response = await axios.post(`${BACKEND_URL}/contact`, {
+          name: name,
+          email: email,
+          message: message
+        });
+        console.log(response.data);
+        return response;
+      };
 
     return (
         <Box sx={{ mx: 'auto', maxWidth: 600 }}>
@@ -73,14 +73,15 @@ const Contact = () => {
                     fullWidth
                     margin="normal"
                 />
-                <ReCAPTCHA
-                    sitekey="YOUR_RECAPTCHA_SITE_KEY"
-                    onChange={handleCaptchaChange}
-                />
-                <Button variant="contained" type="submit">
+                <Button variant="contained" type="submit" sx={{ marginTop: '5px'}}>
                     Send
                 </Button>
             </Box>
+            {status && (
+                <Typography sx={{ marginTop: '10px' }}>
+                    {status}
+                </Typography>
+            )}
         </Box>
     );
 };

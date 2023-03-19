@@ -21,7 +21,7 @@ engine = create_engine(f'{db_uri}/{db_name}', echo=True)
 if not database_exists(engine.url):
     create_database(engine.url)
 
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response, request
 from sqlalchemy import text, func, select
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
@@ -33,10 +33,14 @@ from models import db, User, Favorites, CombinedCityData, RevokedToken
 from datetime import timedelta
 from flask_cors import CORS
 from flask_migrate import Migrate
+from flask_mailing import Mail, Message
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 app = Flask(__name__)
 # db = SQLAlchemy(app)
 CORS(app) # This enables CORS for all routes
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql://{db_username}:{db_password}@{db_host}/{db_name}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -812,6 +816,56 @@ def get_column_values():
     # Return the values as a JSON response
     return jsonify(values=values)
 
+# THIS FUNCTION VERIFIES GOOGLE RECAPTCHA
+
+@app.route('/verify-recaptcha', methods=['POST'])
+def verify_recaptcha():
+    token = request.json['token']
+    try:
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), 
+                        os.environ.get('ENV_RECAPTCHA_SITE_KEY'))
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError('Wrong issuer.')
+        # ID token is valid. Return success.
+        return jsonify(success=True)
+    except ValueError:
+        # Invalid token
+        return jsonify(success=False), 400
+
+# THIS FUNCTION IS SENDING AN EMAIL
+
+app.config['MAIL_USERNAME'] = os.environ.get('ENV_SENDER_EMAIL')
+app.config['MAIL_PASSWORD'] = os.environ.get('ENV_SENDER_PASSWORD')
+app.config['MAIL_PORT'] = os.environ.get('ENV_SMTP_PORT')
+app.config['MAIL_SERVER'] = os.environ.get('ENV_SMTP_SERVER')
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USE_SSL'] = True
+app.config['USE_CREDENTIALS'] = True
+app.config['VALIDATE_CERTS'] = True
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('ENV_SENDER_EMAIL')
+
+mail = Mail(app)
+
+async def send_email(name, email, message):
+    body = f"Name: {name}\nEmail: {email}\nMessage: {message}"
+    msg = Message(subject=os.environ.get('ENV_SUBJECT'), recipients=[os.environ.get('ENV_RECEIVER_EMAIL')])
+    msg.body = body
+    msg.reply_to = [email]
+    await mail.send_message(msg)
+    return {'message': 'Email sent successfully'}
+
+@app.route('/contact', methods=['POST'])
+async def contact():
+    name = request.json.get('name')
+    email = request.json.get('email')
+    message = request.json.get('message')
     
+    if not all([name, email, message]):
+        return jsonify({'message': 'All fields are required'}), 400
+    
+    result = await send_email(name, email, message)
+    
+    return jsonify(result), 200
+
 if __name__ == '__main__':
     app.run(debug=True) #running in debug to track changes
