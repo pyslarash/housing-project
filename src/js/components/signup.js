@@ -22,6 +22,7 @@ function Signup() {
   const loggedIn = useSelector(state => state.user.loggedIn);
   const email = useSelector(state => state.user.email);
   const id = useSelector(state => state.user.id);
+
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -62,6 +63,7 @@ function Signup() {
         console.log("My token: ", response.data.access_token)
         dispatch(setLoggedIn(true));
         navigate('/profile');
+
         // redirect to the home page or any other authenticated page        
       };
       dispatch(setId(response.data.user.id));

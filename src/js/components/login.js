@@ -41,7 +41,7 @@ const Login = () => {
       });
       if (response.status === 200) {
         dispatch(setToken(response.data.access_token));
-        console.log("My token: ", response.data.access_token)
+        console.log("My token: ", response.data.access_token);        
         dispatch(setLoggedIn(true));
         navigate('/profile');// redirect to the home page or any other authenticated page             
       };

@@ -10,7 +10,6 @@ const initialState = {
   id: localStorage.getItem('id'),
 };
 
-export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
