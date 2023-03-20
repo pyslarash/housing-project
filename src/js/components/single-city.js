@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { IconButton, Tooltip, Typography, Grid, Paper, Box } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TurnedInIcon from '@mui/icons-material/TurnedIn';
 import StateName from './statecodename';
@@ -13,6 +14,8 @@ import DbTable from './sub-components/dbtable';
 import CityImages from './sub-components/cityimage';
 import Housing from './sub-components/housing';
 import NotFound from '../notfound';
+import { useDispatch, useSelector } from 'react-redux';
+import { setToken, setId, setLoggedIn } from '../store/userSlice';
 
 
 const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
@@ -27,8 +30,14 @@ const SingleCity = () => {
     const [wPredChartData, setWPredChartData] = useState([]);
     const [wHistChartData, setWHistChartData] = useState([]);
     const [currentWeather, setCurrentWeather] = useState({});
+    const [isSaved, setIsSaved] = useState(false);
     const [images, setImages] = useState([]); // Google Images API state
     const navigate = useNavigate(); // This hooks into the browser's history API
+    const theme = useTheme();
+
+    const token = useSelector(state => state.user.token);
+    const userId = useSelector(state => state.user.id);
+    const loggedIn = useSelector(state => state.user.loggedIn);
 
     const handleBack = () => {
         navigate(-1); // This will take you back to the previous page in the browser history
@@ -45,7 +54,7 @@ const SingleCity = () => {
                 setResponseStatus(error.response.request.status);
             }
         };
-        
+
         fetchData();
     }, [id]);
 
@@ -225,7 +234,73 @@ const SingleCity = () => {
 
     console.log(responseStatus);
 
-    if (responseStatus === 200) { 
+    const isCitySaved = async (userId, cityId, token) => {
+        const url = `${URL}/users/${userId}/favorites/${cityId}`;
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+        try {
+            const response = await axios.get(url, config);
+            if (response.status === 200) {
+                console.log("200 Response")
+                return true; // city is already saved
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        return false; // city is not saved
+    };
+
+    useEffect(() => {
+        const checkIfCitySaved = async () => {
+            const isSaved = await isCitySaved(userId, id, token);
+            setIsSaved(isSaved);
+        };
+
+        if (loggedIn) {
+            checkIfCitySaved();
+        }
+    }, [loggedIn, userId, id, token]);
+
+    const addToFavorites = (userId, cityId, token) => {
+        const url = `${URL}/users/${userId}/favorites/${cityId}`;
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+        return axios.post(url, null, config);
+    };
+
+    const removeCityFromFavorites = async (userId, cityId, token) => {
+        const url = `${URL}/users/${userId}/favorites/${cityId}`;
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        };
+        return axios.delete(url, config);
+    };
+
+    const addCityToFavorites = async (userId, cityId, token) => {
+        try {
+            const isSaved = await isCitySaved(userId, cityId, token);
+            if (isSaved) {
+                await removeCityFromFavorites(userId, cityId, token);
+                setIsSaved(false);
+            } else {
+                await addToFavorites(userId, cityId, token);
+                setIsSaved(true);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+
+    if (responseStatus === 200) {
         if (!cityData) {
             return <div>Loading...</div>;
         }
@@ -249,8 +324,27 @@ const SingleCity = () => {
                     </Typography>
                 </Grid>
                 <Grid item sx={{ flexGrow: 1, textAlign: 'left' }}>
-                    <Tooltip title="Save">
-                        <IconButton size="large" sx={{ fontSize: 36, marginLeft: '20px' }}>
+                    <Tooltip title={loggedIn ? (isSaved ? "Remove" : "Save") : "Login to Save"}>
+                        <IconButton
+                            size="large"
+                            sx={{
+                                fontSize: 36,
+                                marginLeft: '20px',
+                                color: loggedIn
+                                    ? isSaved
+                                        ? theme.palette.primary.main
+                                        : 'inherit'
+                                    : 'grey',
+                                '&:hover': {
+                                    color: isSaved ? 'red' : loggedIn ? theme.palette.primary.main : 'grey',
+                                },
+                            }}
+                            onClick={() => {
+                                if (loggedIn) {
+                                    addCityToFavorites(userId, id, token);
+                                }
+                            }}
+                        >
                             <TurnedInIcon sx={{ fontSize: 36 }} />
                         </IconButton>
                     </Tooltip>

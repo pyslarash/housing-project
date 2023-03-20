@@ -117,14 +117,16 @@ class CombinedCityData(db.Model):
 class Favorites(db.Model):
     __tablename__ = 'favorites'
 
-    user_id = db.Column(db.Integer, ForeignKey('user.id'), primary_key=True)
-    city_id = db.Column(db.Integer, ForeignKey('combined_city_data.id'), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, ForeignKey('user.id'))
+    city_id = db.Column(db.Integer, ForeignKey('combined_city_data.id'))
 
     user = db.relationship('User', backref=db.backref('favorites', overlaps="user_parent"))
     city = db.relationship('CombinedCityData', backref='favorites')
     
     def serialize(self):
         return {
+            'id': self.id,
             'city': self.city.serialize()
         }
     

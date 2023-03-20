@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -7,6 +7,7 @@ import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import { useDispatch, useSelector } from "react-redux";
 import userSlice, { setToken, setMessage, setUsername, setPassword, setLoggedIn, setId } from "../store/userSlice";
+import { isTokenExpired } from "./utils/istokenexpired";
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_BD_URL;
@@ -21,6 +22,13 @@ const Login = () => {
   const loggedIn = useSelector(state => state.user.loggedIn);
   const id = useSelector(state => state.user.id);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      dispatch(setLoggedIn(false));
+      alert('Your session has expired. Please log in again.');
+    }
+  }, [dispatch, token]);
 
   
   const handleSubmit = async (event) => {

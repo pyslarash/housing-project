@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -23,7 +23,11 @@ import TurnedInIcon from '@mui/icons-material/TurnedIn';
 import { visuallyHidden } from '@mui/utils';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
-import searchSlice, { setOrderBy, setOrder, setSelected, setRowsPerPage, setDense, setPage, setResultsData } from '../store/searchSlice.js';
+import searchSlice, { setOrderBy, setOrder, setSelected, setSelectedId, setRowsPerPage, setDense, setPage, setResultsData } from '../store/searchSlice.js';
+import { setToken, setLoggedIn, setId } from '../store/userSlice.js';
+import axios from 'axios';
+
+const URL = process.env.REACT_APP_BD_URL;
 
 let cityId = 0;
 function createData(city, state, cityPopulation, cityDensity, metroPopulation, id) {
@@ -37,7 +41,7 @@ function createData(city, state, cityPopulation, cityDensity, metroPopulation, i
     metroPopulation: metroPopulation || "N/A",
     id
   };
-}
+};
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -67,6 +71,39 @@ function stableSort(array, comparator) {
   return stabilizedThis.map((el) => el[0]);
 }
 
+// This function is making an API call to add items to favorites:
+
+let isAddingToFavorites = false;
+
+const addToFavorites = (userId, cityId, token) => {
+  if (isAddingToFavorites) {
+    console.log('addToFavorites is already in progress');
+    return Promise.resolve(); // Return a resolved Promise to avoid multiple simultaneous calls
+  }
+
+  isAddingToFavorites = true;
+
+  const url = `${URL}/users/${userId}/favorites/${cityId}`;
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
+  return axios.post(url, null, config)
+    .then((response) => {
+      console.log(response.data.message);
+      console.log(`Adding favorite of ${cityId} for user ${userId}...`);
+      isAddingToFavorites = false;
+      return response;
+    })
+    .catch((error) => {
+      console.error(error);
+      isAddingToFavorites = false;
+      throw error;
+    });
+};
+
 const EnhancedTableHead = React.memo((props) => {
   const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
     props;
@@ -78,7 +115,7 @@ const EnhancedTableHead = React.memo((props) => {
     {
       id: 'city',
       numeric: false,
-      disablePadding: true,
+      disablePadding: false,
       label: 'City',
     },
     {
@@ -109,18 +146,7 @@ const EnhancedTableHead = React.memo((props) => {
 
   return (
     <TableHead>
-      <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            color="primary"
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={numSelected > 0 && rowCount === numSelected}
-            onChange={onSelectAllClick}
-            inputProps={{
-              'aria-label': 'select all desserts',
-            }}
-          />
-        </TableCell>
+      <TableRow>        
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -158,6 +184,31 @@ EnhancedTableHead.propTypes = {
 
 function EnhancedTableToolbar(props) {
   const { numSelected } = props;
+  
+  // Creagin a function that will handle adding the Favorites to the list
+
+  const token = useSelector(state => state.user.token);
+  const loggedIn = useSelector(state => state.user.loggedIn);
+  const userId = useSelector(state => state.user.id);
+  const selected = useSelector(state => state.search.selected);
+  const selectedId = useSelector(state => state.search.selectedId);
+
+  const handleFavoritesClick = () => {
+    selected.forEach((city, index) => {
+      addToFavorites(userId, selectedId[index], token)        
+        .then((response) => {
+          // Handle success for this city
+          console.log(response.data.message);
+          console.log(`Adding favorite for city ${city} with ID ${selectedId[index]}...`);
+        })
+        .catch((error) => {
+          // Handle error for this city
+          console.error(error);
+        });
+    });
+  };
+  
+
 
   return (
     <Toolbar
@@ -170,16 +221,7 @@ function EnhancedTableToolbar(props) {
         }),
       }}
     >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{ flex: '1 1 100%' }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} selected
-        </Typography>
-      ) : (
+      
         <Typography
           sx={{ flex: '1 1 100%' }}
           variant="h6"
@@ -188,15 +230,7 @@ function EnhancedTableToolbar(props) {
         >
           Cities
         </Typography>
-      )}
-      {/* This is the Save button */}
-      {numSelected > 0 && (
-        <Tooltip title="Save">
-          <IconButton>
-            <TurnedInIcon />
-          </IconButton>
-        </Tooltip>
-      )}
+    
     </Toolbar>
   );
 }
@@ -210,12 +244,13 @@ const Results = ({ results }) => {
   const order = useSelector(state => state.search.order);
   const orderBy = useSelector(state => state.search.orderBy);
   const selected = useSelector(state => state.search.selected);
+  const selectedId = useSelector(state => state.search.selectedId);
   const page = useSelector(state => state.search.page);
   const dense = useSelector(state => state.search.dense);
   const rowsPerPage = useSelector(state => state.search.rowsPerPage);
-  
+
   const dispatch = useDispatch();
-  
+
   const rows = useMemo(() => {
     return resultsData.map(cityData => createData(cityData.city, cityData.state, cityData.city_population, cityData.city_density, cityData.metro_population, cityData.id));
   }, [resultsData]);
@@ -229,29 +264,40 @@ const Results = ({ results }) => {
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
       dispatch(setSelected(rows.map((row) => row.city)));
+      dispatch(setSelectedId(rows.map((row) => row.id)));
       return;
     }
     dispatch(setSelected([]));
+    dispatch(setSelectedId([]));
   };
 
-  const handleClick = (event, name) => {
+  const handleClick = (event, name, id) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected = [];
+    let newSelectedId = [];
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, name);
+      newSelectedId = newSelectedId.concat(selectedId, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
+      newSelectedId = newSelectedId.concat(selectedId.slice(1));
     } else if (selectedIndex === selected.length - 1) {
       newSelected = newSelected.concat(selected.slice(0, -1));
+      newSelectedId = newSelectedId.concat(selectedId.slice(0, -1));
     } else if (selectedIndex > 0) {
       newSelected = newSelected.concat(
         selected.slice(0, selectedIndex),
         selected.slice(selectedIndex + 1),
       );
+      newSelectedId = newSelectedId.concat(
+        selectedId.slice(0, selectedIndex),
+        selectedId.slice(selectedIndex + 1),
+      );
     }
 
     dispatch(setSelected(newSelected));
+    dispatch(setSelectedId(newSelectedId));
   };
 
   const handleChangePage = (event, newPage) => {
@@ -300,33 +346,22 @@ const Results = ({ results }) => {
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
-                    const isItemSelected = isSelected(row.city);
+                    const isItemSelected = isSelected(row.city, row.id);
                     const labelId = `enhanced-table-checkbox-${index}`;
 
                     return (
                       <TableRow
-                        hover                        
-                        role="checkbox"
+                        hover
                         aria-checked={isItemSelected}
                         tabIndex={-1}
                         key={row.cityId}
                         selected={isItemSelected}
                       >
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            color="primary"
-                            onClick={(event) => handleClick(event, row.city)}
-                            checked={isItemSelected}
-                            inputProps={{
-                              'aria-labelledby': labelId,
-                            }}
-                          />
-                        </TableCell>
                         <TableCell
                           component="th"
                           id={labelId}
                           scope="row"
-                          padding="none"
+                          padding="normal"
                         >
                           <Link to={`/${row.id}`}>{row.city}</Link>
                         </TableCell>
