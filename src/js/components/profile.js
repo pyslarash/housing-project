@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, Grid, Typography, Button } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
-import { setToken, setId } from '../store/userSlice';
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import axios from "axios";
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
@@ -14,6 +14,7 @@ const Profile = () => {
   const id = useSelector(state => state.user.id);
 
   const [data, setData] = useState({});
+  const navigate = useNavigate(); // add this line to replace useHistory
 
   useEffect(() => {
     const getData = async () => {
@@ -33,8 +34,12 @@ const Profile = () => {
     getData();
   }, []);
 
+  const handleUpdateClick = () => {
+    navigate('/profile/edit'); // use navigate to go to the edit-profile page
+  }
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
       <Stack direction="row" spacing={2} sx={{ marginLeft: '60px', marginTop: '30px' }}>
         <Avatar
           alt="Avatar"
@@ -42,39 +47,40 @@ const Profile = () => {
           sx={{ width: 200, height: 200 }}
         />
       </Stack>
-      <Grid container direction="row" alignItems="center" justifyContent="center" spacing={2}>
-        <Grid item>
-          <table>
-            <tbody>
-              <tr>
-                <td>Email:</td>
-                <td>{data.email}</td>
-              </tr>
-              <tr>
-                <td>Username:</td>
-                <td>{data.username}</td>
-              </tr>
-              <tr>
-                <td>Profile Picture:</td>
-                <td>{data.profile_picture}</td>
-              </tr>
-              <tr>
-                <td>First Name:</td>
-                <td>{data.first_name}</td>
-              </tr>
-              <tr>
-                <td>Last Name:</td>
-                <td>{data.last_name}</td>
-              </tr>
-              <tr>
-                <td>Info:</td>
-                <td>{data.info}</td>
-              </tr>
-              {/* Add more rows for other data */}
-            </tbody>
-          </table>
-        </Grid>
-      </Grid>
+      <Box sx={{ ml: '60px', mt: '30px', width: '600px'}}>
+        <table sx={{ width: '100%' }}>
+          <tbody>
+            <tr>
+              <td sx={{ width: '150px' }}>Email:</td>
+              <td>{data.email}</td>
+            </tr>
+            <tr>
+              <td sx={{ width: '150px' }}>Username:</td>
+              <td>{data.username}</td>
+            </tr>
+            <tr>
+              <td sx={{ width: '150px' }}>Profile Picture:</td>
+              <td>{data.profile_picture}</td>
+            </tr>
+            <tr>
+              <td sx={{ width: '150px' }}>First Name:</td>
+              <td>{data.first_name}</td>
+            </tr>
+            <tr>
+              <td sx={{ width: '150px' }}>Last Name:</td>
+              <td>{data.last_name}</td>
+            </tr>
+            <tr>
+              <td sx={{ width: '150px' }}>Info:</td>
+              <td>{data.info}</td>
+            </tr>
+            {/* Add more rows for other data */}
+            <tr>
+              <td colSpan="2" sx={{ textAlign: 'center', pt: '20px' }}><Button variant="contained" onClick={handleUpdateClick}>Edit Profile</Button></td>
+            </tr>
+          </tbody>
+        </table>
+      </Box>
     </Box>
   );
 }
