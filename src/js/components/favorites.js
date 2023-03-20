@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { memo, useMemo, useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -19,15 +20,25 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import TurnedInIcon from '@mui/icons-material/TurnedIn';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
-import { Link } from 'react-router-dom';
-import { useDispatch, useSelector } from "react-redux";
-import searchSlice, { setOrderBy, setOrder, setSelected, setSelectedId, setRowsPerPage, setDense, setPage, setResultsData } from '../store/searchSlice.js';
-import { setToken, setLoggedIn, setId } from '../store/userSlice.js';
 import axios from 'axios';
 
 const URL = process.env.REACT_APP_BD_URL;
+
+// This function is making an API call to add items to favorites:
+
+const removeFromFavorites = (userId, cityId, token) => {
+  const url = `${URL}/users/${userId}/favorites/${cityId}`;
+  const config = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+  console.log("Axios: ", userId, cityId, token)
+  return axios.delete(url, config);
+};
 
 let cityId = 0;
 function createData(city, state, cityPopulation, cityDensity, metroPopulation, id) {
@@ -41,7 +52,7 @@ function createData(city, state, cityPopulation, cityDensity, metroPopulation, i
     metroPopulation: metroPopulation || "N/A",
     id
   };
-};
+}
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -70,39 +81,6 @@ function stableSort(array, comparator) {
   });
   return stabilizedThis.map((el) => el[0]);
 }
-
-// This function is making an API call to add items to favorites:
-
-let isAddingToFavorites = false;
-
-const addToFavorites = (userId, cityId, token) => {
-  if (isAddingToFavorites) {
-    console.log('addToFavorites is already in progress');
-    return Promise.resolve(); // Return a resolved Promise to avoid multiple simultaneous calls
-  }
-
-  isAddingToFavorites = true;
-
-  const url = `${URL}/users/${userId}/favorites/${cityId}`;
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  return axios.post(url, null, config)
-    .then((response) => {
-      console.log(response.data.message);
-      console.log(`Adding favorite of ${cityId} for user ${userId}...`);
-      isAddingToFavorites = false;
-      return response;
-    })
-    .catch((error) => {
-      console.error(error);
-      isAddingToFavorites = false;
-      throw error;
-    });
-};
 
 const EnhancedTableHead = React.memo((props) => {
   const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
@@ -146,7 +124,7 @@ const EnhancedTableHead = React.memo((props) => {
 
   return (
     <TableHead>
-      <TableRow>        
+      <TableRow>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -183,23 +161,17 @@ EnhancedTableHead.propTypes = {
 };
 
 function EnhancedTableToolbar(props) {
-  const { numSelected } = props;
-  
-  // Creagin a function that will handle adding the Favorites to the list
+  const { numSelected, setSelectedIds, passToken, passUserId, passSelectedIds } = props;
 
-  const token = useSelector(state => state.user.token);
-  const loggedIn = useSelector(state => state.user.loggedIn);
-  const userId = useSelector(state => state.user.id);
-  const selected = useSelector(state => state.search.selected);
-  const selectedId = useSelector(state => state.search.selectedId);
-
-  const handleFavoritesClick = () => {
-    selected.forEach((city, index) => {
-      addToFavorites(userId, selectedId[index], token)        
+  // Function to delete from Favorites
+  const handleRemoveFavoritesClick = (userId, token, selectedIds) => {
+    selectedIds.forEach((cityId, index) => {
+      removeFromFavorites(userId, cityId, token)
         .then((response) => {
           // Handle success for this city
           console.log(response.data.message);
-          console.log(`Adding favorite for city ${city} with ID ${selectedId[index]}...`);
+          console.log(`Removing favorite with ID ${cityId}...`);
+          setSelectedIds(prevSelectedIds => prevSelectedIds.filter(id => id !== cityId));
         })
         .catch((error) => {
           // Handle error for this city
@@ -207,8 +179,6 @@ function EnhancedTableToolbar(props) {
         });
     });
   };
-  
-
 
   return (
     <Toolbar
@@ -221,16 +191,33 @@ function EnhancedTableToolbar(props) {
         }),
       }}
     >
-      
+      {numSelected > 0 ? (
+        <Typography
+          sx={{ flex: '1 1 100%' }}
+          color="inherit"
+          variant="subtitle1"
+          component="div"
+        >
+          {numSelected} selected
+        </Typography>
+      ) : (
         <Typography
           sx={{ flex: '1 1 100%' }}
           variant="h6"
           id="tableTitle"
           component="div"
         >
-          Cities
+          Favorites
         </Typography>
-    
+      )}
+
+      {numSelected > 0 && (
+        <Tooltip title="Delete">
+          <IconButton onClick={() => handleRemoveFavoritesClick(passUserId, passToken, passSelectedIds)}>
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      )}
     </Toolbar>
   );
 }
@@ -239,78 +226,93 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
-const Results = ({ results }) => {
-  const resultsData = useSelector(state => state.search.resultsData);
-  const order = useSelector(state => state.search.order);
-  const orderBy = useSelector(state => state.search.orderBy);
-  const selected = useSelector(state => state.search.selected);
-  const selectedId = useSelector(state => state.search.selectedId);
-  const page = useSelector(state => state.search.page);
-  const dense = useSelector(state => state.search.dense);
-  const rowsPerPage = useSelector(state => state.search.rowsPerPage);
+const Favorites = ({ userId, token }) => {
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('calories');
+  const [selected, setSelected] = useState([]);
+  const [page, setPage] = useState(0);
+  const [dense, setDense] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [fetchedData, setFetchedData] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
 
-  const dispatch = useDispatch();
+  // Getting the user's favorites
+  const fetchData = async () => {
+    const url = `${URL}/users/${userId}/favorites`;
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    try {
+      const response = await axios.get(url, config);
+      setFetchedData(response.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [userId, token]);
+
+  console.log(fetchedData)
 
   const rows = useMemo(() => {
-    return resultsData.map(cityData => createData(cityData.city, cityData.state, cityData.city_population, cityData.city_density, cityData.metro_population, cityData.id));
-  }, [resultsData]);
+    return fetchedData.map(cityData => createData(cityData.city.city, cityData.city.state, cityData.city.city_population, cityData.city.city_density, cityData.city.metro_population, cityData.city.id));
+  }, [fetchedData]);
+
+  // console.log("userId in fav: ", userId);
+  // console.log("token in fav: ", token);
+  console.log("rows: ", rows)
+  
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
-    dispatch(setOrder(isAsc ? 'desc' : 'asc'));
-    dispatch(setOrderBy(property));
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
   };
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      dispatch(setSelected(rows.map((row) => row.city)));
-      dispatch(setSelectedId(rows.map((row) => row.id)));
+      const newSelected = rows.map((n) => n.name);
+      setSelected(newSelected);
       return;
     }
-    dispatch(setSelected([]));
-    dispatch(setSelectedId([]));
+    setSelected([]);
   };
 
   const handleClick = (event, name, id) => {
+    event.stopPropagation();
     const selectedIndex = selected.indexOf(name);
+    const selectedIdIndex = selectedIds.indexOf(id);
+  
     let newSelected = [];
-    let newSelectedId = [];
-
+    let newSelectedIds = [];
+  
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, name);
-      newSelectedId = newSelectedId.concat(selectedId, id);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-      newSelectedId = newSelectedId.concat(selectedId.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-      newSelectedId = newSelectedId.concat(selectedId.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1),
-      );
-      newSelectedId = newSelectedId.concat(
-        selectedId.slice(0, selectedIndex),
-        selectedId.slice(selectedIndex + 1),
-      );
+      newSelectedIds = newSelectedIds.concat(selectedIds, id);
+    } else if (selectedIdIndex === -1) {
+      newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
+      newSelectedIds = newSelectedIds.concat(selectedIds.slice(0, selectedIdIndex), selectedIds.slice(selectedIdIndex + 1));
     }
-
-    dispatch(setSelected(newSelected));
-    dispatch(setSelectedId(newSelectedId));
+  
+    setSelected(newSelected);
+    setSelectedIds(newSelectedIds);
   };
 
   const handleChangePage = (event, newPage) => {
-    dispatch(setPage(newPage));
+    setPage(newPage);
   };
 
   const handleChangeRowsPerPage = (event) => {
-    dispatch(setRowsPerPage(parseInt(event.target.value, 10)));
-    dispatch(setPage(0));
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleChangeDense = (event) => {
-    dispatch(setDense(event.target.checked));
+    setDense(event.target.checked);
   };
 
   const isSelected = (name) => selected.indexOf(name) !== -1;
@@ -319,16 +321,17 @@ const Results = ({ results }) => {
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-  return (
-    <Box sx={{ width: '100%' }}>
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
-        <TableContainer>
-          {rows.length === 0 ? (
-            <Typography variant="body1" align="center">
-              Sorry, it seems like there are no results.
-            </Typography>
-          ) : (
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Paper sx={{ width: '100%', mb: 2 }}>
+          <EnhancedTableToolbar
+            numSelected={selected.length}
+            passToken={token}
+            passUserId={userId}
+            passSelectedIds={selectedIds}
+            setSelectedIds={setSelectedIds}
+          />
+          <TableContainer>
             <Table
               sx={{ minWidth: 750 }}
               aria-labelledby="tableTitle"
@@ -346,17 +349,19 @@ const Results = ({ results }) => {
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((row, index) => {
-                    const isItemSelected = isSelected(row.city, row.id);
+                    const isItemSelected = selected.indexOf(row.city) !== -1;
                     const labelId = `enhanced-table-checkbox-${index}`;
-
+    
                     return (
                       <TableRow
                         hover
+                        onClick={(event) => handleClick(event, row.city, row.id)}
+                        role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
                         key={row.cityId}
                         selected={isItemSelected}
-                      >
+                      >                        
                         <TableCell
                           component="th"
                           id={labelId}
@@ -383,24 +388,24 @@ const Results = ({ results }) => {
                   </TableRow>
                 )}
               </TableBody>
-            </Table>)}
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+        <FormControlLabel
+          control={<Switch checked={dense} onChange={handleChangeDense} />}
+          label="Dense padding"
         />
-      </Paper>
-      <FormControlLabel
-        control={<Switch checked={dense} onChange={handleChangeDense} />}
-        label="Dense padding"
-      />
-    </Box>
-  );
-}
+      </Box>
+    );
+  }
 
-export default memo(Results);
+export default Favorites;

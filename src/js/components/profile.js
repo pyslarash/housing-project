@@ -1,16 +1,18 @@
-import * as React from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Box, Grid, Typography, Button } from '@mui/material';
+import Favorites from './favorites';
+import { useDispatch, useSelector } from 'react-redux';
+import { setToken, setId, setLoggedIn } from '../store/userSlice';
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
-import { useSelector } from "react-redux";
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
 const Profile = () => {
-  const token = useSelector(state => state.user.token);
+    const token = useSelector(state => state.user.token);
   const id = useSelector(state => state.user.id);
 
   const [data, setData] = useState({});
@@ -38,9 +40,21 @@ const Profile = () => {
     navigate('/profile/edit'); // use navigate to go to the edit-profile page
   }
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-      <Stack direction="row" spacing={2} sx={{ marginLeft: '60px', marginTop: '30px' }}>
+    return (
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            height: '100vh',
+            '@media (min-width: 1024px)': { // big screens
+                width: '60%',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+            }
+        }}>
+        <Stack direction="row" spacing={2} sx={{ marginLeft: '60px', marginTop: '30px' }}>
         <Avatar
           alt="Avatar"
           src="/static/images/avatar.jpg"
@@ -81,8 +95,11 @@ const Profile = () => {
           </tbody>
         </table>
       </Box>
-    </Box>
-  );
+            <Grid container direction="column" alignItems="center" justifyContent="center" spacing={2}>
+                <Favorites userId={id} token={token} />
+            </Grid>
+        </Box>
+    )
 }
 
 export default Profile;

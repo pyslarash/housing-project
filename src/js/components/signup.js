@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -9,6 +9,7 @@ import axios from 'axios';
 import { setToken, setUsername, setPassword, setLoggedIn, setMessage, setEmail, setId } from '../store/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { isTokenExpired } from "./utils/istokenexpired";
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
@@ -23,6 +24,13 @@ function Signup() {
   const id = useSelector(state => state.user.id);
 
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      dispatch(setLoggedIn(false));
+      alert('Your session has expired. Please log in again.');
+    }
+  }, [dispatch, token]);
 
   const handleUsernameChange = (event) => {
     dispatch(setUsername(event.target.value));
@@ -36,6 +44,10 @@ function Signup() {
     dispatch(setPassword(event.target.value));
   };
 
+  useEffect(() => {
+    console.log('user id:', id);
+  }, [id]);
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -51,10 +63,10 @@ function Signup() {
         console.log("My token: ", response.data.access_token)
         dispatch(setLoggedIn(true));
         navigate('/profile');
-        dispatch(setId(response.data.user.id));
-        console.log ("id from Redux: ", id);
-        // redirect to the home page or any other authenticated page
-      }
+
+        // redirect to the home page or any other authenticated page        
+      };
+      dispatch(setId(response.data.user.id));
       // handle successful response
     } catch (error) {
       if (error.response && (error.response.status === 401 || error.response.status === 403)) {
