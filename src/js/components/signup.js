@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { setToken, setUsername, setPassword, setLoggedIn, setMessage, setEmail, setId } from '../store/userSlice';
+import { setToken, setUsername, setPassword, setLoggedIn, setEmail, setId } from '../store/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { isTokenExpired } from "./utils/istokenexpired";
@@ -16,7 +16,6 @@ const API_URL = process.env.REACT_APP_BD_URL;
 function Signup() {
   const dispatch = useDispatch();
   const token = useSelector(state => state.user.token);
-  const message = useSelector(state => state.user.message);
   const username = useSelector(state => state.user.username);
   const password = useSelector(state => state.user.password);
   const loggedIn = useSelector(state => state.user.loggedIn);

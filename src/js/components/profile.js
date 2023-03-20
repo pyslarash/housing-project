@@ -8,11 +8,12 @@ import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';
 import axios from "axios";
 import { useNavigate } from 'react-router-dom';
+import { Table, TableCell, TableContainer, TableRow, Paper } from '@mui/material';
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
 const Profile = () => {
-    const token = useSelector(state => state.user.token);
+  const token = useSelector(state => state.user.token);
   const id = useSelector(state => state.user.id);
 
   const [data, setData] = useState({});
@@ -40,66 +41,75 @@ const Profile = () => {
     navigate('/profile/edit'); // use navigate to go to the edit-profile page
   }
 
-    return (
-        <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            height: '100vh',
-            '@media (min-width: 1024px)': { // big screens
-                width: '60%',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-            }
-        }}>
-        <Stack direction="row" spacing={2} sx={{ marginLeft: '60px', marginTop: '30px' }}>
+  return (
+
+    <Box sx={{ mb: 4 }}>
+      <Stack direction="row" spacing={2} sx={{ marginLeft: '60px', marginTop: '30px' }}>
         <Avatar
           alt="Avatar"
           src="/static/images/avatar.jpg"
           sx={{ width: 200, height: 200 }}
         />
+
       </Stack>
-      <Box sx={{ ml: '60px', mt: '30px', width: '600px'}}>
-        <table sx={{ width: '100%' }}>
-          <tbody>
-            <tr>
-              <td sx={{ width: '150px' }}>Email:</td>
-              <td>{data.email}</td>
-            </tr>
-            <tr>
-              <td sx={{ width: '150px' }}>Username:</td>
-              <td>{data.username}</td>
-            </tr>
-            <tr>
-              <td sx={{ width: '150px' }}>Profile Picture:</td>
-              <td>{data.profile_picture}</td>
-            </tr>
-            <tr>
-              <td sx={{ width: '150px' }}>First Name:</td>
-              <td>{data.first_name}</td>
-            </tr>
-            <tr>
-              <td sx={{ width: '150px' }}>Last Name:</td>
-              <td>{data.last_name}</td>
-            </tr>
-            <tr>
-              <td sx={{ width: '150px' }}>Info:</td>
-              <td>{data.info}</td>
-            </tr>
-            {/* Add more rows for other data */}
-            <tr>
-              <td colSpan="2" sx={{ textAlign: 'center', pt: '20px' }}><Button variant="contained" onClick={handleUpdateClick}>Edit Profile</Button></td>
-            </tr>
-          </tbody>
-        </table>
-      </Box>
-            <Grid container direction="column" alignItems="center" justifyContent="center" spacing={2}>
-                <Favorites userId={id} token={token} />
-            </Grid>
-        </Box>
-    )
+      <Grid container alignItems="center" justifyContent="space-between" sx={{ padding: '10px', mb: 4 }}>
+        <Grid item xs={12} sm={6}>
+          <Paper>
+            <TableContainer>
+              <Table>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle1">Email:</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">{data.email}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle1">Username:</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">{data.username}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle1">First Name:</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">{data.first_name}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle1">Last Name:</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">{data.info}</Typography>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle1">Info:</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">{data.cloudcover + '%'}</Typography>
+                  </TableCell>
+                </TableRow>
+              </Table>
+            </TableContainer>
+          </Paper>
+          <Button variant="contained" onClick={handleUpdateClick}>Edit Profile</Button>
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <Paper>
+            <Favorites userId={id} token={token} />
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  )
 }
 
 export default Profile;
