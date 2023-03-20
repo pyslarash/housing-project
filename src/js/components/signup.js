@@ -9,6 +9,7 @@ import axios from 'axios';
 import { setToken, setUsername, setPassword, setLoggedIn, setMessage, setEmail, setId } from '../store/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { isTokenExpired } from "./utils/istokenexpired";
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
@@ -22,6 +23,13 @@ function Signup() {
   const email = useSelector(state => state.user.email);
   const id = useSelector(state => state.user.id);
   const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (token && isTokenExpired(token)) {
+      dispatch(setLoggedIn(false));
+      alert('Your session has expired. Please log in again.');
+    }
+  }, [dispatch, token]);
 
   const handleUsernameChange = (event) => {
     dispatch(setUsername(event.target.value));

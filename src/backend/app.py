@@ -538,6 +538,44 @@ def get_user_favorites(user_id):
         serialized_favorites = [favorite.serialize() for favorite in favorites]
         return jsonify(serialized_favorites), 200
     
+# GET A FAVORITE FOR A USER
+@app.route('/users/<int:user_id>/favorites/<int:city_id>', methods=['GET'])
+@jwt_required()
+def get_user_favorite(user_id, city_id):
+    current_user = get_jwt_identity()
+
+    # Check if the authenticated user exists
+    if current_user is None:
+        response = make_response(jsonify({'message': 'User not found'}), 404)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Check if the authenticated user is an admin
+    if current_user.get('type') == 'admin':
+        # If the authenticated user is an admin, allow them to view any user's favorites by ID
+        favorite = session.query(Favorites).filter_by(user_id=user_id, city_id=city_id).first()
+        if favorite:
+            return jsonify(favorite.serialize()), 200
+        else:
+            response = make_response(jsonify({'message': 'Favorite not found'}), 404)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+    else:
+        # If the authenticated user is not an admin, only allow them to view their own favorites
+        if str(current_user.get('id')) != str(user_id):
+            response = make_response(jsonify({'message': 'You are not authorized to view this user\'s favorites'}), 403)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+
+        # Get the user's favorite with the given city ID
+        favorite = session.query(Favorites).filter_by(user_id=user_id, city_id=city_id).first()
+        if favorite:
+            return jsonify(favorite.serialize()), 200
+        else:
+            response = make_response(jsonify({'message': 'Favorite not found'}), 404)
+            response.headers['Content-Type'] = 'application/json'
+            return response
+    
 #THIS API END POINT GETS A CITY BY ID
 @app.route('/city_data/<int:id>')
 def get_city_data(id):

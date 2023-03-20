@@ -8,6 +8,7 @@ export const searchSlice = createSlice({
     orderBy: 'cityPopulation',
     order: 'asc',
     selected: [],
+    selectedId: [],
     rowsPerPage: 10,
     dense: false,
     page: 0
@@ -25,6 +26,10 @@ export const searchSlice = createSlice({
     setSelected: (state, action) => {
       state.selected = action.payload;
     },
+    setSelectedId: (state, action) => {
+      state.selectedId = action.payload;
+      console.log("MSG FROM SLICE: ", action.payload)
+    },
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
     },
@@ -37,6 +42,6 @@ export const searchSlice = createSlice({
   },
 });
 
-export const { setResultsData, setOrderBy, setOrder, setSelected, setRowsPerPage, setDense, setPage } = searchSlice.actions;
+export const { setResultsData, setOrderBy, setOrder, setSelected, setSelectedId, setRowsPerPage, setDense, setPage } = searchSlice.actions;
 
 export default searchSlice.reducer;
