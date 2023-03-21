@@ -13,6 +13,7 @@ import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
+import TableFooter from '@mui/material/TableFooter'
 import Paper from '@mui/material/Paper';
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
@@ -276,97 +277,157 @@ const Results = ({ results }) => {
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
         <EnhancedTableToolbar numSelected={selected.length} />
-        {/* Checking if the user logged in */}
-        {loggedIn ? (
-          // If logged in, checking if there are results. If not, showing a message.
-          <TableContainer>
-            {rows.length === 0 ? (
-              <Typography variant="body1" align="center">
-                Sorry, it seems like there are no results.
-              </Typography>
-            ) : (
-          // Else showing results
-              <Table
-                sx={{ minWidth: 750 }}
-                aria-labelledby="tableTitle"
-                size={dense ? 'small' : 'medium'}
-              >
-                <EnhancedTableHead
-                  numSelected={selected.length}
-                  order={order}
-                  orderBy={orderBy}
-                  onSelectAllClick={handleSelectAllClick}
-                  onRequestSort={handleRequestSort}
-                  rowCount={rows.length}
-                />
-                <TableBody>
-                  {stableSort(rows, getComparator(order, orderBy))
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((row, index) => {
-                      const isItemSelected = isSelected(row.city, row.id);
-                      const labelId = `enhanced-table-checkbox-${index}`;
-
-                      return (
-                        <TableRow
-                          hover
-                          aria-checked={isItemSelected}
-                          tabIndex={-1}
-                          key={row.cityId}
-                          selected={isItemSelected}
-                        >
-                          <TableCell
-                            component="th"
-                            id={labelId}
-                            scope="row"
-                            padding="normal"
-                          >
-                            <Link to={`/${row.id}`}>{row.city}</Link>
-                          </TableCell>
-                          <TableCell align="right" sx={{ width: '5%' }}>{row.state}</TableCell>
-                          {/* Some values can be null, so when we are displaying them, we are showing N/A instead. */}
-                          <TableCell align="right">{row.cityPopulation.toLocaleString()}</TableCell>
-                          <TableCell align="right">{row.cityDensity.toLocaleString()}</TableCell>
-                          <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  {emptyRows > 0 && (
-                    <TableRow
-                      style={{
-                        height: (dense ? 33 : 53) * emptyRows,
-                      }}
-                    >
-                      <TableCell colSpan={6} />
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-            <TablePagination
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              component="div"
-              count={rows.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </TableContainer>
+        {rows.length === 0 ? (
+          <Typography variant="body1" align="center" sx={{ paddingBottom: '20px' }}>
+            Sorry, it seems like there are no results.
+          </Typography>
         ) : (
-          // If user not logged in, showing up to top 3 results and asking to login
           <>
-            {rows.slice(0, 3).map((row, index) => (
-              <div key={index}>
-                <Link to={`/${row.id}`}>{row.city}</Link>
-                <span> - {row.state}</span>
-              </div>
-            ))}
-            <Typography variant="body1" align="center">
-              If you want to view more, please&nbsp;
-              <Link to="/login">Log In</Link>
-              &nbsp;or&nbsp;
-              <Link to="/signup">Sign Up</Link>.
-            </Typography>
+            {loggedIn ? (
+              <TableContainer>
+                <Table
+                  sx={{ minWidth: 750 }}
+                  aria-labelledby="tableTitle"
+                  size={dense ? 'small' : 'medium'}
+                >
+                  <EnhancedTableHead
+                    numSelected={selected.length}
+                    order={order}
+                    orderBy={orderBy}
+                    onSelectAllClick={handleSelectAllClick}
+                    onRequestSort={handleRequestSort}
+                    rowCount={rows.length}
+                  />
+                  <TableBody>
+                    {stableSort(rows, getComparator(order, orderBy))
+                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                      .map((row, index) => {
+                        const isItemSelected = isSelected(row.city, row.id);
+                        const labelId = `enhanced-table-checkbox-${index}`;
+
+                        return (
+                          <TableRow
+                            hover
+                            aria-checked={isItemSelected}
+                            tabIndex={-1}
+                            key={row.cityId}
+                            selected={isItemSelected}
+                          >
+                            <TableCell
+                              component="th"
+                              id={labelId}
+                              scope="row"
+                              padding="normal"
+                            >
+                              <Link to={`/${row.id}`}>{row.city}</Link>
+                            </TableCell>
+                            <TableCell align="right" sx={{ width: '5%' }}>
+                              {row.state}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.cityPopulation.toLocaleString()}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.cityDensity.toLocaleString()}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.metroPopulation.toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    {emptyRows > 0 && (
+                      <TableRow
+                        style={{
+                          height: (dense ? 33 : 53) * emptyRows,
+                        }}
+                      >
+                        <TableCell colSpan={6} />
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+                <TablePagination
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                  component="div"
+                  count={rows.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+              </TableContainer>
+            ) : (
+              <TableContainer>
+                <Table
+                  sx={{ minWidth: 750 }}
+                  aria-labelledby="tableTitle"
+                  size={dense ? 'small' : 'medium'}
+                >
+                  <EnhancedTableHead
+                    numSelected={selected.length}
+                    order={order}
+                    orderBy={orderBy}
+                    onSelectAllClick={handleSelectAllClick}
+                    onRequestSort={handleRequestSort}
+                    rowCount={rows.length}
+                  />
+                  <TableBody>
+                    {stableSort(rows, getComparator(order, orderBy))
+                      .slice(0, 3)
+                      .map((row, index) => {
+                        const isItemSelected = isSelected(row.city, row.id);
+                        const labelId = `enhanced-table-checkbox-${index}`;
+
+                        return (
+                          <TableRow
+                            hover
+                            aria-checked={isItemSelected}
+                            tabIndex={-1}
+                            key={row.cityId}
+                            selected={isItemSelected}
+                          >
+                            <TableCell
+                              component="th"
+                              id={labelId}
+                              scope="row"
+                              padding="normal"
+                            >
+                              <Link to={`/${row.id}`}>{row.city}</Link>
+                            </TableCell>
+                            <TableCell align="right" sx={{ width: '5%' }}>
+                              {row.state}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.cityPopulation.toLocaleString()}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.cityDensity.toLocaleString()}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.metroPopulation.toLocaleString()}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                  </TableBody>
+                  {!loggedIn && (
+                    <TableFooter>
+                      <TableRow>
+                        <TableCell colSpan={6}>
+                          <Typography variant="body1" align="center">
+                            If you want to view <strong>{rows.length - 3} more results</strong>, please&nbsp;
+                            <Link to="/login">Log In</Link>
+                            &nbsp;or&nbsp;
+                            <Link to="/signup">Sign Up</Link>.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    </TableFooter>
+                  )}
+                </Table>
+              </TableContainer>
+            )}
           </>
         )}
       </Paper>

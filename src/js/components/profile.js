@@ -67,7 +67,7 @@ const Profile = () => {
             />
             <Button onClick={handleUpdateClick} variant="outlined">Edit Profile</Button>
           </Grid>
-          <Grid item xs={12} md={9.75} container sx={{ flexGrow: 1, textAlign: 'right', justifyContent: 'top', alignItems: 'right', width: '100%' }}>
+          <Grid item xs={12} md={9} container sx={{ flexGrow: 1, textAlign: 'right', justifyContent: 'top', alignItems: 'right', width: '100%' }}>
             <Paper sx={{ width: '100%', justifyContent: 'center', margin: '20px' }}>
               <ProfileTable email={data.email} username={data.username} first_name={data.first_name} last_name={data.last_name} info={data.info} />
             </Paper>

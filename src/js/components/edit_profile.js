@@ -220,7 +220,7 @@ const EditProfile = () => {
             <Button onClick={handleUpdate} sx={{ marginTop: '20px' }} variant="outlined">Save Profile</Button>
             <Button onClick={handleGoBack} sx={{ marginTop: '20px' }} variant="outlined">Go Back</Button>
           </Grid>
-          <Grid item xs={12} s={8} md={10} container sx={{ flexGrow: 1, textAlign: 'right', justifyContent: 'top', alignItems: 'right', width: '100%' }}>
+          <Grid item xs={12} s={8} md={9} container sx={{ flexGrow: 1, textAlign: 'right', justifyContent: 'top', alignItems: 'right', width: '100%' }}>
             <Paper sx={{ width: '100%', justifyContent: 'center', margin: '20px' }}>
               <TableContainer>
                 <Table>
