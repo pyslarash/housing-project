@@ -12,7 +12,6 @@ import ProfileTableEdit from './sub-components/profile-table-edit';
 import avatar_pic from "../../img/avatars/locationpropic.png";
 import Dropzone from 'react-dropzone';
 import { styled } from '@mui/material/styles';
-import { Cropper } from 'react-easy-crop';
 import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
 import { v4 as uuidv4 } from 'uuid';

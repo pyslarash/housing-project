@@ -73,37 +73,6 @@ function stableSort(array, comparator) {
 
 // This function is making an API call to add items to favorites:
 
-let isAddingToFavorites = false;
-
-const addToFavorites = (userId, cityId, token) => {
-  if (isAddingToFavorites) {
-    console.log('addToFavorites is already in progress');
-    return Promise.resolve(); // Return a resolved Promise to avoid multiple simultaneous calls
-  }
-
-  isAddingToFavorites = true;
-
-  const url = `${URL}/users/${userId}/favorites/${cityId}`;
-  const config = {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  };
-
-  return axios.post(url, null, config)
-    .then((response) => {
-      console.log(response.data.message);
-      console.log(`Adding favorite of ${cityId} for user ${userId}...`);
-      isAddingToFavorites = false;
-      return response;
-    })
-    .catch((error) => {
-      console.error(error);
-      isAddingToFavorites = false;
-      throw error;
-    });
-};
-
 const EnhancedTableHead = React.memo((props) => {
   const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
     props;
@@ -146,7 +115,7 @@ const EnhancedTableHead = React.memo((props) => {
 
   return (
     <TableHead>
-      <TableRow>        
+      <TableRow>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -184,7 +153,7 @@ EnhancedTableHead.propTypes = {
 
 function EnhancedTableToolbar(props) {
   const { numSelected } = props;
-  
+
   // Creagin a function that will handle adding the Favorites to the list
 
   const token = useSelector(state => state.user.token);
@@ -192,23 +161,6 @@ function EnhancedTableToolbar(props) {
   const userId = useSelector(state => state.user.id);
   const selected = useSelector(state => state.search.selected);
   const selectedId = useSelector(state => state.search.selectedId);
-
-  const handleFavoritesClick = () => {
-    selected.forEach((city, index) => {
-      addToFavorites(userId, selectedId[index], token)        
-        .then((response) => {
-          // Handle success for this city
-          console.log(response.data.message);
-          console.log(`Adding favorite for city ${city} with ID ${selectedId[index]}...`);
-        })
-        .catch((error) => {
-          // Handle error for this city
-          console.error(error);
-        });
-    });
-  };
-  
-
 
   return (
     <Toolbar
@@ -221,16 +173,16 @@ function EnhancedTableToolbar(props) {
         }),
       }}
     >
-      
-        <Typography
-          sx={{ flex: '1 1 100%' }}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
-          Cities
-        </Typography>
-    
+
+      <Typography
+        sx={{ flex: '1 1 100%' }}
+        variant="h6"
+        id="tableTitle"
+        component="div"
+      >
+        Cities
+      </Typography>
+
     </Toolbar>
   );
 }
@@ -248,6 +200,7 @@ const Results = ({ results }) => {
   const page = useSelector(state => state.search.page);
   const dense = useSelector(state => state.search.dense);
   const rowsPerPage = useSelector(state => state.search.rowsPerPage);
+  const loggedIn = useSelector(state => state.user.loggedIn);
 
   const dispatch = useDispatch();
 
@@ -323,77 +276,99 @@ const Results = ({ results }) => {
     <Box sx={{ width: '100%' }}>
       <Paper sx={{ width: '100%', mb: 2 }}>
         <EnhancedTableToolbar numSelected={selected.length} />
-        <TableContainer>
-          {rows.length === 0 ? (
-            <Typography variant="body1" align="center">
-              Sorry, it seems like there are no results.
-            </Typography>
-          ) : (
-            <Table
-              sx={{ minWidth: 750 }}
-              aria-labelledby="tableTitle"
-              size={dense ? 'small' : 'medium'}
-            >
-              <EnhancedTableHead
-                numSelected={selected.length}
-                order={order}
-                orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
-                onRequestSort={handleRequestSort}
-                rowCount={rows.length}
-              />
-              <TableBody>
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row.city, row.id);
-                    const labelId = `enhanced-table-checkbox-${index}`;
+        {/* Checking if the user logged in */}
+        {loggedIn ? (
+          // If logged in, checking if there are results. If not, showing a message.
+          <TableContainer>
+            {rows.length === 0 ? (
+              <Typography variant="body1" align="center">
+                Sorry, it seems like there are no results.
+              </Typography>
+            ) : (
+          // Else showing results
+              <Table
+                sx={{ minWidth: 750 }}
+                aria-labelledby="tableTitle"
+                size={dense ? 'small' : 'medium'}
+              >
+                <EnhancedTableHead
+                  numSelected={selected.length}
+                  order={order}
+                  orderBy={orderBy}
+                  onSelectAllClick={handleSelectAllClick}
+                  onRequestSort={handleRequestSort}
+                  rowCount={rows.length}
+                />
+                <TableBody>
+                  {stableSort(rows, getComparator(order, orderBy))
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row, index) => {
+                      const isItemSelected = isSelected(row.city, row.id);
+                      const labelId = `enhanced-table-checkbox-${index}`;
 
-                    return (
-                      <TableRow
-                        hover
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={row.cityId}
-                        selected={isItemSelected}
-                      >
-                        <TableCell
-                          component="th"
-                          id={labelId}
-                          scope="row"
-                          padding="normal"
+                      return (
+                        <TableRow
+                          hover
+                          aria-checked={isItemSelected}
+                          tabIndex={-1}
+                          key={row.cityId}
+                          selected={isItemSelected}
                         >
-                          <Link to={`/${row.id}`}>{row.city}</Link>
-                        </TableCell>
-                        <TableCell align="right" sx={{ width: '5%' }}>{row.state}</TableCell>
-                        {/* Some values can be null, so when we are displaying them, we are showing N/A instead. */}
-                        <TableCell align="right">{row.cityPopulation.toLocaleString()}</TableCell>
-                        <TableCell align="right">{row.cityDensity.toLocaleString()}</TableCell>
-                        <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                {emptyRows > 0 && (
-                  <TableRow
-                    style={{
-                      height: (dense ? 33 : 53) * emptyRows,
-                    }}
-                  >
-                    <TableCell colSpan={6} />
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>)}
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 25, 50, 100]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
+                          <TableCell
+                            component="th"
+                            id={labelId}
+                            scope="row"
+                            padding="normal"
+                          >
+                            <Link to={`/${row.id}`}>{row.city}</Link>
+                          </TableCell>
+                          <TableCell align="right" sx={{ width: '5%' }}>{row.state}</TableCell>
+                          {/* Some values can be null, so when we are displaying them, we are showing N/A instead. */}
+                          <TableCell align="right">{row.cityPopulation.toLocaleString()}</TableCell>
+                          <TableCell align="right">{row.cityDensity.toLocaleString()}</TableCell>
+                          <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  {emptyRows > 0 && (
+                    <TableRow
+                      style={{
+                        height: (dense ? 33 : 53) * emptyRows,
+                      }}
+                    >
+                      <TableCell colSpan={6} />
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              component="div"
+              count={rows.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </TableContainer>
+        ) : (
+          // If user not logged in, showing up to top 3 results and asking to login
+          <>
+            {rows.slice(0, 3).map((row, index) => (
+              <div key={index}>
+                <Link to={`/${row.id}`}>{row.city}</Link>
+                <span> - {row.state}</span>
+              </div>
+            ))}
+            <Typography variant="body1" align="center">
+              If you want to view more, please&nbsp;
+              <Link to="/login">Log In</Link>
+              &nbsp;or&nbsp;
+              <Link to="/signup">Sign Up</Link>.
+            </Typography>
+          </>
+        )}
       </Paper>
       <FormControlLabel
         control={<Switch checked={dense} onChange={handleChangeDense} />}
