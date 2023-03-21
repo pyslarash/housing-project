@@ -37,8 +37,6 @@ from flask_cors import CORS
 from flask_cors import cross_origin
 from flask_migrate import Migrate
 from flask_mailing import Mail, Message
-from google.oauth2 import id_token
-from google.auth.transport import requests
 
 app = Flask(__name__)
 # db = SQLAlchemy(app)
