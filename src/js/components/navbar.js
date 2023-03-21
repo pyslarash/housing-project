@@ -12,20 +12,21 @@ import Button from '@mui/material/Button';
 import { Drawer } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import logo from "../../img/logo-100.png";
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { setLoggedIn, setToken, setUsername, setPassword } from '../store/userSlice';
+import { setLoggedIn, setToken, setUsername, setPassword, setId } from '../store/userSlice';
 import axios from "axios";
+import avatar_pic from "../../img/avatars/locationpropic.png"
 //import { setLoggedIn, setToken, setEmail, setPassword, setUsername } from "../../store/userSlice";
 
 
 const API_URL = process.env.REACT_APP_BD_URL;
 
 const pages = ['Search', 'Contact'];
-const settings = ['Profile', 'Saves', 'Logout'];
+const settings = ['Profile', 'Logout'];
 
 function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -35,6 +36,7 @@ function Navbar() {
   const username = useSelector(state => state.user.username);
   const password = useSelector(state => state.user.password);
   const loggedIn = useSelector(state => state.user.loggedIn);
+  const id = useSelector(state => state.user.id);
   const dispatch = useDispatch();
 
   const navigate = useNavigate();
@@ -81,6 +83,44 @@ function Navbar() {
       console.log(error);
     }
   };
+
+  // Setting Profile image:
+
+  const [data, setData] = useState({});
+
+  // Calling the image
+
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/users/${id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        setData(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    getData();
+  }, []);
+
+  // Setting a temporary variable for the profile img
+
+  let setProfileImage = null;
+
+  // If the image exists, we are setting it:
+
+  if (data.profile_pic) {
+    console.log("data: ", data)
+    console.log("data.profile_pic: ", data.profile_pic);
+    const imageFolder = "./avatars/";
+    const imageFile = data.profile_pic;
+    const imagePath = imageFolder + imageFile;
+    setProfileImage = require(`${imagePath}`);
+  }
 
   return (
     <AppBar className="header" position="static">
@@ -185,7 +225,7 @@ function Navbar() {
             {loggedIn ? (
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="User Avatar" src="/static/images/avatar/2.jpg" />
+                  <Avatar alt="User Avatar" src={setProfileImage ? setProfileImage : avatar_pic} />
                 </IconButton>
               </Tooltip>
             ) : (
@@ -218,16 +258,21 @@ function Navbar() {
                     key={setting}
                     onClick={
                       setting === 'Logout' ? handleLogout :
-                        setting === 'Profile' ? () => { navigate('/profile') } :
-                          null}>
+                        setting === 'Profile' ? () => {
+                          handleCloseUserMenu();
+                          navigate('/profile');
+                        } :
+                          null
+                    }
+                  >
                     <Typography textAlign="center">{setting}</Typography>
                   </MenuItem>
                 ))}
               </Menu>
             )}
-        </Box>
-      </Toolbar>
-    </Container>
+          </Box>
+        </Toolbar>
+      </Container>
     </AppBar >
   );
 

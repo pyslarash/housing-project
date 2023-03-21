@@ -7,7 +7,7 @@ const userSlice = createSlice({
     username: localStorage.getItem('username'),
     password: localStorage.getItem('password'),
     email: localStorage.getItem('email'),
-    message: null,
+    message: '',
     loggedIn: false,
     id: localStorage.getItem('id'),
   },
