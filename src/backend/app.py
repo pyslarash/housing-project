@@ -1,10 +1,25 @@
 
 import os
-from dotenv import load_dotenv
 from sqlalchemy_utils import database_exists, create_database
+from dotenv import load_dotenv
+
 from sqlalchemy import create_engine
 from datetime import datetime
 from jwt.exceptions import ExpiredSignatureError
+from flask import Flask, request, jsonify, make_response, request
+from sqlalchemy import text, func, select
+from sqlalchemy.orm import sessionmaker
+from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
+from jwt.exceptions import ExpiredSignatureError
+from jwt_config import configure_jwt
+from werkzeug.security import generate_password_hash, check_password_hash
+from models import db, User, Favorites, CombinedCityData, RevokedToken
+from datetime import timedelta
+from flask_cors import CORS
+from flask_cors import cross_origin
+from flask_migrate import Migrate
+from flask_mailing import Mail, Message
 
 # Load environment variables from .env file
 load_dotenv()
@@ -22,21 +37,6 @@ engine = create_engine(f'{db_uri}/{db_name}', echo=True)
 
 if not database_exists(engine.url):
     create_database(engine.url)
-
-from flask import Flask, request, jsonify, make_response, request
-from sqlalchemy import text, func, select
-from sqlalchemy.orm import sessionmaker
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
-from jwt.exceptions import ExpiredSignatureError
-from jwt_config import configure_jwt
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Favorites, CombinedCityData, RevokedToken
-from datetime import timedelta
-from flask_cors import CORS
-from flask_cors import cross_origin
-from flask_migrate import Migrate
-from flask_mailing import Mail, Message
 
 app = Flask(__name__)
 # db = SQLAlchemy(app)
