@@ -34,16 +34,12 @@ function UseTokenExpiration() {
         return false;
       }
       const currentTime = new Date().toLocaleString("en-US", { timeZone: "UTC" }); // get the current time in UTC timezone
-      console.log("currentTime ", currentTime)
       const currentUnixTime = Date.parse(currentTime); // get the current time in Unix timestamp in milliseconds
       const expirationUnixTime = expirationTime; // convert the expiration time to UTC time zone and get its Unix timestamp in milliseconds
       const timeDifference = expirationUnixTime - currentUnixTime; // calculate the time difference between the expiration time and the current time
-      console.log("Time difference: ", timeDifference)
-      if (timeDifference > 1000) {
-        console.log("Token is still valid!");
+      if (timeDifference > 5000) {
         dispatch(setLoggedIn(true));
       } else {
-        console.log("Token has expired!");
         dispatch(setLoggedIn(false));
         handleLogout();
         navigate('/login');
@@ -81,6 +77,7 @@ function UseTokenExpiration() {
       });
   
       // clear the user's access token from the state
+      console.log("Calling handleLogout!")
       dispatch(setToken(null));
       dispatch(setLoggedIn(false));
     } catch (error) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, Grid, Typography, Container } from '@mui/material';
 import Favorites from './favorites';
 import { useDispatch, useSelector } from 'react-redux';
 import { setToken, setId, setLoggedIn } from '../store/userSlice';
@@ -55,29 +55,36 @@ const Profile = () => {
   }
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Typography component='h1' variant='h3' sx={{ textAlign: 'center', margin: '20px' }}>Welcome, {data.username}</Typography>
-      <Grid item>
-        <Grid container item sx={{ display: 'flex' }}>
-          <Grid xs={12} md={2} item container sx={{ justifyContent: 'center', margin: '20px', alignItems: 'center', flexDirection: 'column', width: '100%' }}>
-            <Avatar
-              alt="Avatar"
-              src={setProfileImage ? setProfileImage : avatar_pic}
-              sx={{ width: '250px', height: '250px', marginBottom: '20px' }}
-            />
-            <Button onClick={handleUpdateClick} variant="outlined">Edit Profile</Button>
-          </Grid>
-          <Grid item xs={12} md={9} container sx={{ flexGrow: 1, textAlign: 'right', justifyContent: 'top', alignItems: 'right', width: '100%' }}>
-            <Paper sx={{ width: '100%', justifyContent: 'center', margin: '20px' }}>
-              <ProfileTable email={data.email} username={data.username} first_name={data.first_name} last_name={data.last_name} info={data.info} />
-            </Paper>
-          </Grid>
+    <Container maxWidth="xl">
+
+      <Typography component='h1' variant='h3' sx={{ textAlign: 'center', margin: '20px' }}>
+        {data.first_name ? (data.first_name === "Captain" ? `Ahoy, ${data.first_name}` : `Welcome,  ${data.first_name}`) : "Welcome, Stranger"}
+      </Typography>
+
+      <Grid container spacing={3} sx={{ marginRight:'20px'}}>
+
+        <Grid item xs={12} sm={6} md={3} sx={{ textAlign: "center", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+          <Avatar
+            alt="Avatar"
+            src={setProfileImage ? setProfileImage : avatar_pic}
+            sx={{ width: '250px', height: '250px', marginBottom: '20px', justifyContent: 'center' }}
+          />
+          <Button onClick={handleUpdateClick} variant="outlined">Edit Profile</Button>
         </Grid>
-        <Grid item sx={{ margin: '20px', flexShrink: 0 }}>
+
+        <Grid item xs={12} sm={6} md={9} sx={{ justifyContent: 'top' }}>
+          <Paper  sx={{ width: '100%', justifyContent: 'center', maxWidth: 'none' }}>
+            <ProfileTable email={data.email} username={data.username} first_name={data.first_name} last_name={data.last_name} info={data.info} />
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} s={12} md={12} sx={{ width: '100%', maxWidth: 'none' }}>
           <Favorites userId={id} token={token} />
         </Grid>
+
       </Grid>
-    </Box>
+
+    </Container>
   )
 }
 

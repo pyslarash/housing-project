@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -23,7 +23,7 @@ function Signup() {
   const id = useSelector(state => state.user.id);
 
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     if (token && isTokenExpired(token)) {
       dispatch(setLoggedIn(false));
@@ -35,9 +35,7 @@ function Signup() {
     dispatch(setUsername(event.target.value));
   };
 
-  const handleEmailChange = (event) => {
-    dispatch(setEmail(event.target.value));
-  };
+
 
   const handlePasswordChange = (event) => {
     dispatch(setPassword(event.target.value));
@@ -46,7 +44,7 @@ function Signup() {
   useEffect(() => {
     console.log('user id:', id);
   }, [id]);
-  
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -82,6 +80,41 @@ function Signup() {
     }
   };
 
+
+  // Validating email
+  const validateEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return "Invalid email";
+    }
+  };
+
+  const checkEmailExistence = async (email) => {
+    try {
+      const response = await axios.get(`${API_URL}/check_email`, {
+        params: { email }
+      });
+      return response.data.exists;
+    } catch (error) {
+      console.log(error);
+      // handle error
+    }
+  };
+
+  const [emailError, setEmailError] = useState("");
+  const [emailExists, setEmailExists] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  const handleEmailChange = (event) => {
+    dispatch(setEmail(event.target.value));
+    setEmailError(validateEmail(event.target.value));
+  };
+
+  const handleEmailBlur = async () => {
+    setEmailTouched(true);
+    const exists = await checkEmailExistence(email);
+    setEmailExists(exists);
+  };
 
   return (
     <Box
@@ -127,7 +160,17 @@ function Signup() {
           label="Email"
           value={email}
           onChange={handleEmailChange}
+          onBlur={handleEmailBlur}
+          error={emailError || emailExists}
+          helperText={
+            emailError
+              ? 'Please enter a valid email address'
+              : emailExists
+                ? 'This email is already in use'
+                : ''
+          }
         />
+
         <TextField
           required
           fullWidth

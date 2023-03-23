@@ -270,7 +270,7 @@ const Favorites = ({ userId, token }) => {
   // console.log("userId in fav: ", userId);
   // console.log("token in fav: ", token);
   console.log("rows: ", rows)
-  
+
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -291,10 +291,10 @@ const Favorites = ({ userId, token }) => {
     event.stopPropagation();
     const selectedIndex = selected.indexOf(name);
     const selectedIdIndex = selectedIds.indexOf(id);
-  
+
     let newSelected = [];
     let newSelectedIds = [];
-  
+
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, name);
       newSelectedIds = newSelectedIds.concat(selectedIds, id);
@@ -302,7 +302,7 @@ const Favorites = ({ userId, token }) => {
       newSelected = newSelected.concat(selected.slice(0, selectedIndex), selected.slice(selectedIndex + 1));
       newSelectedIds = newSelectedIds.concat(selectedIds.slice(0, selectedIdIndex), selectedIds.slice(selectedIdIndex + 1));
     }
-  
+
     setSelected(newSelected);
     setSelectedIds(newSelectedIds);
   };
@@ -326,91 +326,91 @@ const Favorites = ({ userId, token }) => {
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-    return (
-      <Box sx={{ width: '100%' }}>
-        <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar
-            numSelected={selected.length}
-            passToken={token}
-            passUserId={userId}
-            passSelectedIds={selectedIds}
-            setSelectedIds={setSelectedIds}
-          />
-          <TableContainer>
-            <Table
-              sx={{ minWidth: 250 }}
-              aria-labelledby="tableTitle"
-              size={dense ? 'small' : 'medium'}
-            >
-              <EnhancedTableHead
-                numSelected={selected.length}
-                order={order}
-                orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
-                onRequestSort={handleRequestSort}
-                rowCount={rows.length}
-              />
-              <TableBody>
-                {stableSort(rows, getComparator(order, orderBy))
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = selected.indexOf(row.city) !== -1;
-                    const labelId = `enhanced-table-checkbox-${index}`;
-    
-                    return (
-                      <TableRow
-                        hover
-                        onClick={(event) => handleClick(event, row.city, row.id)}
-                        role="checkbox"
-                        aria-checked={isItemSelected}
-                        tabIndex={-1}
-                        key={row.cityId}
-                        selected={isItemSelected}
-                      >                        
-                        <TableCell
-                          component="th"
-                          id={labelId}
-                          scope="row"
-                          padding="normal"
-                        >
-                          <Link to={`/${row.id}`}>{row.city}</Link>
-                        </TableCell>
-                        <TableCell align="right" sx={{ width: '5%' }}>{row.state}</TableCell>
-                        {/* Some values can be null, so when we are displaying them, we are showing N/A instead. */}
-                        <TableCell align="right">{row.cityPopulation.toLocaleString()}</TableCell>
-                        <TableCell align="right">{row.cityDensity.toLocaleString()}</TableCell>
-                        <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                {emptyRows > 0 && (
-                  <TableRow
-                    style={{
-                      height: (dense ? 33 : 53) * emptyRows,
-                    }}
-                  >
-                    <TableCell colSpan={6} />
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={rows.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </Paper>
-        <FormControlLabel
-          control={<Switch checked={dense} onChange={handleChangeDense} />}
-          label="Dense padding"
+  return (
+    <>
+      <Paper>
+        <EnhancedTableToolbar
+          numSelected={selected.length}
+          passToken={token}
+          passUserId={userId}
+          passSelectedIds={selectedIds}
+          setSelectedIds={setSelectedIds}
         />
-      </Box>
-    );
-  }
+        <TableContainer>
+          <Table
+            sx={{ minWidth: 250 }}
+            aria-labelledby="tableTitle"
+            size={dense ? 'small' : 'medium'}
+          >
+            <EnhancedTableHead
+              numSelected={selected.length}
+              order={order}
+              orderBy={orderBy}
+              onSelectAllClick={handleSelectAllClick}
+              onRequestSort={handleRequestSort}
+              rowCount={rows.length}
+            />
+            <TableBody>
+              {stableSort(rows, getComparator(order, orderBy))
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row, index) => {
+                  const isItemSelected = selected.indexOf(row.city) !== -1;
+                  const labelId = `enhanced-table-checkbox-${index}`;
+
+                  return (
+                    <TableRow
+                      hover
+
+                      role="checkbox"
+                      aria-checked={isItemSelected}
+                      tabIndex={-1}
+                      key={row.cityId}
+                      selected={isItemSelected}
+                    >
+                      <TableCell
+                        component="th"
+                        id={labelId}
+                        scope="row"
+                        padding="normal"
+                      >
+                        <Link to={`/${row.id}`}>{row.city}</Link>
+                      </TableCell>
+                      <TableCell align="right" sx={{ width: '5%' }}>{row.state}</TableCell>
+                      {/* Some values can be null, so when we are displaying them, we are showing N/A instead. */}
+                      <TableCell align="right">{row.cityPopulation.toLocaleString()}</TableCell>
+                      <TableCell align="right">{row.cityDensity.toLocaleString()}</TableCell>
+                      <TableCell align="right">{row.metroPopulation.toLocaleString()}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              {emptyRows > 0 && (
+                <TableRow
+                  style={{
+                    height: (dense ? 33 : 53) * emptyRows,
+                  }}
+                >
+                  <TableCell colSpan={6} />
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={rows.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </Paper>
+      <FormControlLabel
+        control={<Switch checked={dense} onChange={handleChangeDense} />}
+        label="Dense padding"
+      />
+    </>
+  );
+}
 
 export default Favorites;
