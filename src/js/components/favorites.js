@@ -246,7 +246,12 @@ const Favorites = ({ userId, token }) => {
     };
     try {
       const response = await axios.get(url, config);
-      setFetchedData(response.data);
+      if (response.data.length === 0) {
+        // handle empty data case here
+        console.log("User has no favorites data");
+      } else {
+        setFetchedData(response.data);
+      }
     } catch (error) {
       console.error(error);
     }

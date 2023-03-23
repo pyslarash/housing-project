@@ -4,6 +4,7 @@ const userSlice = createSlice({
   name: 'user',
   initialState: {
     token: localStorage.getItem('token'),
+    tokenTime: localStorage.getItem('expirationTime'),
     username: localStorage.getItem('username'),
     password: localStorage.getItem('password'),
     email: localStorage.getItem('email'),
@@ -16,8 +17,9 @@ const userSlice = createSlice({
       state.token = action.payload;
       localStorage.setItem('token', action.payload);
     },
-    setMessage: (state, action) => {
-      state.message = action.payload;
+    setTokenTime: (state, action) => {
+      state.tokenTime = action.payload;
+      localStorage.setItem('tokenTime', action.payload);
     },
     setUsername: (state, action) => {
       state.username = action.payload;
@@ -33,6 +35,7 @@ const userSlice = createSlice({
     },
     setLoggedIn: (state, action) => {
       state.loggedIn = action.payload;
+      localStorage.setItem('loggedIn', action.payload);
     },
     setId: (state, action) => {
       state.id = action.payload;
@@ -43,6 +46,7 @@ const userSlice = createSlice({
 
 export const {
   setToken,
+  setTokenTime,
   setMessage,
   setUsername,
   setPassword,

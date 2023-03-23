@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { setToken, setUsername, setPassword, setLoggedIn, setEmail, setId } from '../store/userSlice';
+import { setToken, setUsername, setPassword, setLoggedIn, setEmail, setId, setTokenTime } from '../store/userSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { isTokenExpired } from "./utils/istokenexpired";
@@ -59,6 +59,7 @@ function Signup() {
       });
       if (response.status === 200) {
         dispatch(setToken(response.data.access_token));
+        dispatch(setTokenTime(response.data.expiration_time));
         console.log("My token: ", response.data.access_token)
         dispatch(setLoggedIn(true));
         navigate('/profile');

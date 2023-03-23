@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import axios from 'axios';
 import { useDispatch, useSelector } from "react-redux";
-import userSlice, { setToken, setMessage, setUsername, setPassword, setLoggedIn, setId } from "../store/userSlice";
+import userSlice, { setToken, setMessage, setUsername, setPassword, setLoggedIn, setId, setTokenTime } from "../store/userSlice";
 import { isTokenExpired } from "./utils/istokenexpired";
 import { useNavigate } from 'react-router-dom';
 
@@ -41,7 +41,8 @@ const Login = () => {
       });
       if (response.status === 200) {
         dispatch(setToken(response.data.access_token));
-        console.log("My token: ", response.data.access_token);        
+        dispatch(setTokenTime(response.data.expiration_time));
+        console.log("Data: ", response.data);        
         dispatch(setLoggedIn(true));
         navigate('/profile');// redirect to the home page or any other authenticated page             
       };

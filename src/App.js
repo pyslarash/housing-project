@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet';
 import { Provider } from "react-redux";
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from './js/store/store';
-import "./styles/links.css"
+import "./styles/links.css";
 
 // Can change theme colors here:
 const theme = createTheme({
@@ -20,8 +20,9 @@ const theme = createTheme({
 });
 
 function App() {
+
+  // ThemeProvider applies the colors to the whole app
   return (
-    // ThemeProvider applies the colors to the whole app
     <Provider store={store}>
       <PersistGate loading={<div>Loading...</div>} persistor={persistor}>
         <ThemeProvider theme={theme}>
