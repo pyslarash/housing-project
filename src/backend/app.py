@@ -45,6 +45,50 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql://{db_username}:{db_password}@{db_host}/{db_name}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize JWT Manager
+jwt = JWTManager(app)
+
+# SETTING AUTOMATIC LOGOUTS WHEN THE TOKEN EXPIRES
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    try:
+        # Get the current user and JTI
+        current_user_id = jwt_payload["identity"]["id"]
+        jti = jwt_payload["jti"]
+        
+        # Update user's logged_in status to False
+        existing_user = User.query.filter_by(id=current_user_id).first()
+        if existing_user:
+            existing_user.logged_in = False
+            db.session.commit()
+            print(f"User {current_user_id} logged out.")
+        else:
+            print(f"User with ID {current_user_id} not found.")
+        
+        # Revoke expired token
+        revoked_token = RevokedToken(jti=jti)
+        db.session.add(revoked_token)
+        db.session.commit()
+        print(f"Token {jti} revoked.")
+
+        response = make_response(jsonify({'message': 'Token has expired', 'expired': True}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    except KeyError:
+        # If the "identity" key is not present in the payload, just return a 401 response with an error message
+        response = make_response(jsonify({'message': 'Token has expired', 'expired': True}), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    except Exception as e:
+        response = make_response(jsonify({'message': 'Failed to revoke token. Please try again later', 'expired': True}), 500)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+app.config['JWT_EXPIRED_TOKEN_CALLBACK'] = expired_token_callback
+jwt.expired_token_loader(expired_token_callback)
+
 db.init_app(app)
 configure_jwt(app)
 
@@ -55,6 +99,9 @@ with app.app_context():
     db.create_all()
 
 migrate = Migrate(app, db)
+
+
+
 
 # Try to create a test session and test the connection
 try:
@@ -122,7 +169,7 @@ def create_user():
         session.commit()
 
         # Create access token for the newly created user with a 1 hour expiration time
-        access_token = create_access_token(identity={'id': user_add.id, 'type': user_add.type}, expires_delta=timedelta(hours=1))
+        access_token = create_access_token(identity={'id': user_add.id}, expires_delta=timedelta(seconds=1))
 
         # Return the access token and user data in JSON format
         return jsonify({'access_token': access_token, 'user': user_add.serialize()}), 200
@@ -138,7 +185,7 @@ def create_user():
         # Close the session
         session.close()
 
-# THIS ENDPOINT ALLOWS FOR A USER TO LOGIN
+# THIS ENDPOINT LOGS THE USER IN
 @app.route('/login', methods=['POST'])
 @cross_origin()
 def login():
@@ -192,15 +239,12 @@ def login():
     db.session.commit()
 
     try:
-        # Create access token for the logged in user with a 1 hour expiration time
-        access_token = create_access_token(identity={'id': existing_user.id, 'type': existing_user.type},
-                                           expires_delta=timedelta(hours=1))
-
+        # Create access token for the logged in user with a 1 minute expiration time
+        access_token = create_access_token(identity={'id': existing_user.id}, expires_delta=timedelta(seconds=1))
         # Return the access token and user data in JSON format
         return jsonify({'access_token': access_token, 'user': existing_user.serialize()}), 200
 
     except ExpiredSignatureError:
-        # If the token is expired, update the user's logged_in status to False
         existing_user.logged_in = False
         db.session.commit()
 
@@ -211,29 +255,21 @@ def login():
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
-# Initialize JWT Manager
-jwt = JWTManager(app)
-
 # THIS ENDPOINT ALLOWS FOR A USER TO LOGOUT
 @app.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
-    current_user = get_jwt_identity()
-    jti = get_jwt()['jti']
-
-    # Check if the authenticated user exists
-    if current_user is None:
-        response = make_response(jsonify({'message': 'User not found'}), 404)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    # Update user's logged_in status to False
-    existing_user = User.query.filter_by(id=current_user['id']).first()
-    existing_user.logged_in = False
-    db.session.commit()
-
     try:
-        # Revoke access token and refresh token
+        # Get the current user and JTI
+        current_user = get_jwt_identity()
+        jti = get_jwt()['jti']
+
+        # Update user's logged_in status to False
+        existing_user = User.query.filter_by(id=current_user['id']).first()
+        existing_user.logged_in = False
+        db.session.commit()
+
+        # Revoke access token
         revoked_token = RevokedToken(jti=jti)
         db.session.add(revoked_token)
         db.session.commit()
@@ -241,6 +277,9 @@ def logout():
         response = make_response(jsonify({'message': 'Logged out successfully'}), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
+
+    except jwt.ExpiredSignatureError:
+        return expired_token_callback()
 
     except:
         response = make_response(jsonify({'message': 'Failed to logout. Please try again later.'}), 500)
