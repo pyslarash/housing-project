@@ -25,3 +25,5 @@ yarn-error.log*
 
 /src/backend/__pycache__/
 /src/backend/data/
+
+/.vscode/sftp.json
