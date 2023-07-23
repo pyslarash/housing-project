@@ -41,6 +41,22 @@ A standout feature of our backend is the implementation of a sophisticated filte
 <img height=50 src="https://user-images.githubusercontent.com/25181517/192158954-f88b5814-d510-4564-b285-dff7d6400dad.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/183898674-75a4a1b1-f960-4ea9-abcb-637170a00a75.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/117447155-6a868a00-af3d-11eb-9cfe-245df15c9f3f.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/183897015-94a058a6-b86e-4e42-a37f-bf92061753e5.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/187896150-cc1dcb12-d490-445c-8e4d-1275cd2388d6.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/189716630-fe6c084c-6c66-43af-aa49-64c8aea4a5c2.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/183423507-c056a6f9-1ba8-4312-a350-19bcbc5a8697.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/183423775-2276e25d-d43d-4e58-890b-edbc88e915f7.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/183896128-ec99105a-ec1a-4d85-b08b-1aa1620b2046.png" /><img height=50 src="https://user-images.githubusercontent.com/25181517/117208740-bfb78400-adf5-11eb-97bb-09072b6bedfc.png" />
 
 ### Installation
+=======
+This is a little JavaScript app I created following the tutorial by WebDev Simplified. It's a fully-working calculator app that can perform all the basic functions such as addition, substraction, multiplication, and division.
+
+The app is using object-oriented programming.
+
+You can watch the full tutorial here: 
+```
+https://www.youtube.com/watch?v=j59qQ7YWLxw
+```
+
+### Technologies Used
+
+<img height=50 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" /><img height=50 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" />
+<img height=50 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" />
+
+### Installation
 ```
 $ git clone https://github.com/pyslarash/calculator.git
 $ cd /backend
