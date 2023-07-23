@@ -1,0 +1,30 @@
+#  LIST OF COMMANDS
+
+# For front end
+
+# npm run start
+
+# For back end
+# 
+# First, we need to make sure Docker is running, because we will be creating a container.
+# docker build -t locationpro-backend
+# There might be issues when docker container gets huge (10GB+). In this case, delete all existing containers and delete .tar files!
+# Create .tar to move it to the server:
+# docker save -o locationpro-backend.tar locationpro-backend:latest
+# Move it to the server:
+# scp locationpro-backend.tar pyslarash@10.0.0.113:/var/www/html/locationpro.app/backend
+# 
+# 
+
+# For server side
+# 
+# Load it on the server 
+# docker load -i /var/www/html/locationpro.app/backend/locationpro-backend.tar
+# Run it:
+# docker run -d --name locationpro-backend -p 5000:5000 locationpro-backend:latest
+# Check if it's running:
+# docker logs locationpro-backend
+# Might need to clean up previous images:
+# docker stop locationpro-backend
+# docker rm locationpro-backend
+# docker rmi locationpro-backend:latest
