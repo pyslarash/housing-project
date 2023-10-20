@@ -1,7 +1,7 @@
 # LocationPro
 
 <p align="center">
-  <img src="https://pyslarash.com/wp-content/uploads/2023/05/locationpro-350.gif" />
+  <img src="https://pyslarash.com/wp-content/uploads/2023/10/locationpro-interface.jpg" />
 </p>
 
 ### About
